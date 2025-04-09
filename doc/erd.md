@@ -16,7 +16,7 @@ erDiagram
         int toUserId
     }
 
-    BlockList {
+    Block {
         int Id
         datetime createdAt
         datetime updatedAt
@@ -41,7 +41,7 @@ erDiagram
     }
 
     Member ||--o{ Follow : "1:N"
-    Member ||--o{ BlockList : "1:N"
+    Member ||--o{ Block : "1:N"
     Member ||--o{ Participate : "1:N"
     ChatRoom ||--o{ Participate : "1:N"
 

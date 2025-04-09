@@ -1,0 +1,17 @@
+spring:
+  application:
+    name: user
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:33066/mydb?characterEncoding=UTF-8&serverTimezone=UTC
+    username: myuser
+    password: mypassword
+  jpa:
+    open-in-view: true
+    generate-ddl: true
+    format_sql: true
+    hibernate:
+      ddl-auto: create
+    properties:
+      hibernate.timezone.default_storage: NORMALIZE_UTC
+      hibernate.jdbc.time_zone: UTC
