@@ -1,4 +1,4 @@
-package com.com_chat.user.common;
+package com.com_chat.user.support;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.EntityListeners;

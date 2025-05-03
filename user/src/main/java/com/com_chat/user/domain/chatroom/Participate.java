@@ -1,7 +1,7 @@
 package com.com_chat.user.domain.chatroom;
 
 
-import com.com_chat.user.common.BaseEntity;
+import com.com_chat.user.support.BaseEntity;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;

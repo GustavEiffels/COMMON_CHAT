@@ -1,10 +1,9 @@
 package com.com_chat.user.domain.member;
 
 
-import com.com_chat.user.common.BaseEntity;
+import com.com_chat.user.support.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
-import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
