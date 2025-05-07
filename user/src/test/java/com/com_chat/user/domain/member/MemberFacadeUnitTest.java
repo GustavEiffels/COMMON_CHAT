@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class MemberUnitTest {
+class MemberFacadeUnitTest {
 
     @Test
     @DisplayName("사용자 생성 시, 필수 값을 안넣은 경우 에러 발생")
