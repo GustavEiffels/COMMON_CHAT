@@ -4,10 +4,11 @@ import com.com_chat.user.domain.member.Member;
 import com.com_chat.user.domain.member.MemberRepository;
 import com.com_chat.user.infrastructure.member.entity.MemberEntity;
 import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
 
-
+@Repository
 @RequiredArgsConstructor
 public class MemberRepositoryImpl implements MemberRepository {
 
@@ -20,7 +21,7 @@ public class MemberRepositoryImpl implements MemberRepository {
 
     @Override
     public Long create(Member member) {
-        return jpaRepository.save(MemberEntity.fromDomain(member)).getId();
+        return jpaRepository.save(MemberEntity.fromDomain(member)).getMemberId();
     }
 
 

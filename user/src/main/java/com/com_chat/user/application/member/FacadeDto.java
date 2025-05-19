@@ -1,7 +1,6 @@
 package com.com_chat.user.application.member;
 
 import com.com_chat.user.domain.member.DomainDto;
-
 import java.time.LocalDateTime;
 
 public record FacadeDto() {
@@ -9,16 +8,14 @@ public record FacadeDto() {
             String nick,
             String email,
             String password,
-            String profilePath,
-            LocalDateTime localDateTime
+            String profilePath
     ){
         public DomainDto.SignUpCommand toCommand(){
             return new DomainDto.SignUpCommand(
                     nick,
                     email,
                     password,
-                    profilePath,
-                    localDateTime
+                    profilePath
             );
         }
     }

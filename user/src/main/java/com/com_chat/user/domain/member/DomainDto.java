@@ -8,8 +8,7 @@ public record DomainDto() {
             String nick,
             String email,
             String password,
-            String profilePath,
-            LocalDateTime localDateTime
+            String profilePath
     ) {
         public Member toDomain() {
             return new Member(
@@ -18,7 +17,7 @@ public record DomainDto() {
                     email,
                     password,
                     profilePath,
-                    localDateTime
+                    null
             );
         }
     }

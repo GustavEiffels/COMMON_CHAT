@@ -22,7 +22,7 @@ public class MemberEntity extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    private Long   id;
+    private Long   memberId;
 
     @Column(nullable = false)
     private String nick;
@@ -42,6 +42,7 @@ public class MemberEntity extends BaseEntity {
             Member member
     ){
         MemberEntity entity = new MemberEntity();
+        entity.memberId    = member.memberId();
         entity.email = member.email();
         entity.nick  = member.nick();
         entity.lastLoginDate = member.lastLoginDate();
@@ -53,7 +54,7 @@ public class MemberEntity extends BaseEntity {
 
     public Member toDomain(){
         return new Member(
-                id,
+                memberId,
                 nick,
                 email,
                 password,
