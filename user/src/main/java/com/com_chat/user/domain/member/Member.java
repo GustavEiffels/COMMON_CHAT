@@ -15,13 +15,13 @@ public record Member(
         LocalDateTime lastLoginDate
 ){
 
-// REGEX
+    // REGEX
     private static final Pattern NICKNAME_REGEX = Pattern.compile("^[a-zA-Z가-힣0-9_]{2,16}$");
     private static final Pattern EMAIL_REGEX    = Pattern.compile("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$");
     private static final Pattern PASSWORD_REGEX = Pattern.compile( "^(?=.*[A-Z])(?=.*[a-z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$");
 
 
-// VALUE VALID
+    // VALUE VALID
     public Member{
         if( !NICKNAME_REGEX.matcher(nick).matches() ){
             throw new BaseException(MemberException.INVALID_NICKNAME);
