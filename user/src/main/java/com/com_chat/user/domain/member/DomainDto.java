@@ -1,21 +1,24 @@
 package com.com_chat.user.domain.member;
 
 import com.com_chat.user.support.exceptions.BaseException;
+
+import java.util.List;
 import java.util.regex.Pattern;
 
 public record DomainDto() {
+    private static final Pattern NICKNAME_REGEX = Pattern.compile("^[a-zA-Z가-힣0-9_]{2,16}$");
+    private static final Pattern EMAIL_REGEX    = Pattern.compile("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$");
+    private static final Pattern PASSWORD_REGEX = Pattern.compile( "^(?=.*[A-Z])(?=.*[a-z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$");
 
+
+    // SIGNUP
     public record SignUpCommand(
             String nick,
             String email,
             String password,
             String profilePath
-    ) {
-
-        // REGEX
-        private static final Pattern NICKNAME_REGEX = Pattern.compile("^[a-zA-Z가-힣0-9_]{2,16}$");
-        private static final Pattern EMAIL_REGEX    = Pattern.compile("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$");
-        private static final Pattern PASSWORD_REGEX = Pattern.compile( "^(?=.*[A-Z])(?=.*[a-z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$");
+    )
+    {
 
         public SignUpCommand{
             if( !PASSWORD_REGEX.matcher(password).matches() ){
@@ -42,9 +45,62 @@ public record DomainDto() {
 
     public record SignUpInfo(
             Long memberId
-    ) {
+    )
+    {
         public static SignUpInfo fromDomain(Long memberId) {
             return new SignUpInfo(memberId);
+        }
+    }
+
+    // Search
+    public record SearchCommand(
+            MemberEnum.QueryType type,
+            String query
+    )
+    {
+        public SearchCommand{
+            if(type.equals(MemberEnum.QueryType.EMAIL) && !EMAIL_REGEX.matcher(query).matches() ){
+                throw new BaseException(MemberException.INVALID_EMAIL);
+            }
+            if(type.equals(MemberEnum.QueryType.NICK) && !NICKNAME_REGEX.matcher(query).matches() ){
+                throw new BaseException(MemberException.INVALID_NICKNAME);
+            }
+        }
+    }
+
+
+    public record SearchInfo(
+            List<SearchDomainDto> members
+    )
+    {
+        public static SearchInfo fromDomain(
+            List<Member> members
+        )
+        {
+            return new SearchInfo(
+                    members.stream()
+                            .map(DomainDto.SearchDomainDto::fromDomain)
+                            .toList());
+        }
+    }
+
+    public record SearchDomainDto(
+            Long memberId,
+            String nick,
+            String email,
+            String profilePath
+    )
+    {
+        public static SearchDomainDto fromDomain(
+                Member member
+        )
+        {
+            return new SearchDomainDto(
+                    member.memberId(),
+                    member.nick(),
+                    member.email(),
+                    member.profilePath()
+            );
         }
     }
 }

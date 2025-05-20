@@ -3,10 +3,7 @@ package com.com_chat.user.interfaces.member;
 import com.com_chat.user.application.member.MemberFacade;
 import com.com_chat.user.support.exceptions.ApiResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
@@ -26,4 +23,11 @@ public class MemberController {
                 )
         );
     }
+    @GetMapping("/search/{type}/{query}")
+    public ApiResponse<ApiDto.SearchResponse> search(
+            @PathVariable String type,
+            @PathVariable String query){
+        return null;
+    }
+
 }

@@ -11,6 +11,8 @@ public class MemberService {
     private final PasswordEncoder passwordEncoder;
     private final MemberRepository repository;
 
+
+// SIGNUP
     public DomainDto.SignUpInfo create(DomainDto.SignUpCommand command){
 
         if( repository.findByNick(command.nick()).isPresent() ){
@@ -27,5 +29,7 @@ public class MemberService {
         );
     }
 
+// SEARCH
+    
 
 }

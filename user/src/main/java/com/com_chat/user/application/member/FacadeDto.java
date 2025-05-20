@@ -1,7 +1,11 @@
 package com.com_chat.user.application.member;
 
 import com.com_chat.user.domain.member.DomainDto;
+import com.com_chat.user.domain.member.MemberEnum;
+import com.com_chat.user.interfaces.member.ApiDto;
+
 import java.time.LocalDateTime;
+import java.util.List;
 
 public record FacadeDto() {
     public record SignUpCriteria(
@@ -27,4 +31,28 @@ public record FacadeDto() {
             return new SignUpResult(info.memberId());
         }
     }
+
+
+// SEARCH
+    public record SearchCriteria(
+            MemberEnum.QueryType queryType,
+            String query
+    )
+    {
+
+    }
+    public record SearchResult(
+            List<SearchFacadeDto> members
+    )
+    {
+
+    }
+
+    public record SearchFacadeDto(
+            Long memberId,
+            String nick,
+            String email,
+            String profilePath
+    )
+    {}
 }
