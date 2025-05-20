@@ -30,6 +30,14 @@ public class MemberService {
     }
 
 // SEARCH
-    
+    public DomainDto.SearchInfo search(DomainDto.SearchCommand command){
+        return DomainDto.SearchInfo.fromDomain(
+                repository.findByQuery(
+                        command.type(),
+                        command.query(),
+                        command.pageable()
+                )
+        );
+    }
 
 }

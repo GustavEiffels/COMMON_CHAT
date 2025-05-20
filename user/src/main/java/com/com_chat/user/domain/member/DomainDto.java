@@ -1,6 +1,8 @@
 package com.com_chat.user.domain.member;
 
 import com.com_chat.user.support.exceptions.BaseException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.regex.Pattern;
@@ -55,7 +57,8 @@ public record DomainDto() {
     // Search
     public record SearchCommand(
             MemberEnum.QueryType type,
-            String query
+            String query,
+            Pageable pageable
     )
     {
         public SearchCommand{
@@ -70,17 +73,28 @@ public record DomainDto() {
 
 
     public record SearchInfo(
-            List<SearchDomainDto> members
+            List<SearchDomainDto> members,
+            int totalPages,
+            long totalElements,
+            int currentPage,
+            boolean hasNext,
+            boolean hasPrevious
     )
     {
         public static SearchInfo fromDomain(
-            List<Member> members
+            Page<Member> page
         )
         {
             return new SearchInfo(
-                    members.stream()
-                            .map(DomainDto.SearchDomainDto::fromDomain)
-                            .toList());
+                    page.getContent().stream()
+                            .map(SearchDomainDto::fromDomain)
+                            .toList(),
+                    page.getTotalPages(),
+                    page.getTotalElements(),
+                    page.getNumber() + 1, // Convert to 1-based for client
+                    page.hasNext(),
+                    page.hasPrevious()
+            );
         }
     }
 

@@ -12,4 +12,8 @@ public class MemberFacade {
     public FacadeDto.SignUpResult signUp(FacadeDto.SignUpCriteria criteria){
         return FacadeDto.SignUpResult.fromInfo(memberService.create(criteria.toCommand()));
     }
+
+    public FacadeDto.SearchResult search(FacadeDto.SearchCriteria criteria){
+        return FacadeDto.SearchResult.fromInfo(memberService.search(criteria.toCommand()));
+    }
 }

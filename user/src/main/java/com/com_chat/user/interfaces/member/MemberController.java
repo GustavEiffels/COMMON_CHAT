@@ -3,6 +3,9 @@ package com.com_chat.user.interfaces.member;
 import com.com_chat.user.application.member.MemberFacade;
 import com.com_chat.user.support.exceptions.ApiResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -26,8 +29,13 @@ public class MemberController {
     @GetMapping("/search/{type}/{query}")
     public ApiResponse<ApiDto.SearchResponse> search(
             @PathVariable String type,
-            @PathVariable String query){
-        return null;
+            @PathVariable String query,
+            @PageableDefault(page = 0, size = 10, sort = "nick", direction = Sort.Direction.ASC) Pageable pageable){
+        return ApiResponse.ok(
+                ApiDto.SearchResponse.fromResult(
+                        memberFacade.search(new ApiDto.SearchRequest(type,query,pageable).toCriteria())
+                )
+        );
     }
 
 }
