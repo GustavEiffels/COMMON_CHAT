@@ -38,4 +38,12 @@ public class MemberController {
         );
     }
 
+    @PatchMapping("/update")
+    public ApiResponse<Void> update(
+            @RequestBody ApiDto.UpdateRequest request
+    )
+    {
+        memberFacade.update(request.toCriteria());
+        return ApiResponse.ok();
+    }
 }

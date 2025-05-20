@@ -14,8 +14,7 @@ public record ApiDto() {
             String nick,
             String email,
             String password,
-            String profilePath,
-            LocalDateTime localDateTime
+            String profilePath
     )
     {
         public FacadeDto.SignUpCriteria toCriteria() {
@@ -106,6 +105,19 @@ public record ApiDto() {
             );
         }
     }
+
+    // PATCH
+    public record UpdateRequest(
+            Long memberId,
+            String password,
+            String profilePath
+    )
+    {
+        public FacadeDto.UpdateCriteria toCriteria(){
+            return new FacadeDto.UpdateCriteria(memberId,password,profilePath);
+        }
+    }
+
 
 
 }

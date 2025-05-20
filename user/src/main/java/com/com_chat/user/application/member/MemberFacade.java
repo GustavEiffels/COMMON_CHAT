@@ -16,4 +16,8 @@ public class MemberFacade {
     public FacadeDto.SearchResult search(FacadeDto.SearchCriteria criteria){
         return FacadeDto.SearchResult.fromInfo(memberService.search(criteria.toCommand()));
     }
+
+    public void update(FacadeDto.UpdateCriteria criteria){
+        memberService.update(criteria.toCommand());
+    }
 }

@@ -3,9 +3,12 @@ package com.com_chat.user.domain.member;
 import com.com_chat.user.support.exceptions.BaseException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.util.StringUtils;
 
 import java.util.List;
 import java.util.regex.Pattern;
+
+import static org.springframework.util.StringUtils.*;
 
 public record DomainDto() {
     private static final Pattern NICKNAME_REGEX = Pattern.compile("^[a-zA-Z가-힣0-9_]{2,16}$");
@@ -115,6 +118,20 @@ public record DomainDto() {
                     member.email(),
                     member.profilePath()
             );
+        }
+    }
+
+// UPDATE
+    public record UpdateCommand(
+            Long memberId,
+            String password,
+            String profilePath
+    )
+    {
+        public UpdateCommand{
+            if(hasText(password) && !PASSWORD_REGEX.matcher(password).matches() ){
+                throw new BaseException(MemberException.INVALID_PASSWORD);
+            }
         }
     }
 }

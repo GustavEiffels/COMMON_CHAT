@@ -13,4 +13,10 @@ public record Member(
         LocalDateTime lastLoginDate
 ){
 
+    public Member changePassword(String password){
+        return new Member(memberId,nick,email,password,profilePath,lastLoginDate);
+    }
+    public Member changeProfilePath(String profilePath){
+        return new Member(memberId,nick,email,password,profilePath,lastLoginDate);
+    }
 }

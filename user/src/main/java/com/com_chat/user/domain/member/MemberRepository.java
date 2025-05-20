@@ -14,5 +14,7 @@ public interface MemberRepository {
 
     Optional<Member> findByEmail(String email);
 
-    Long create(Member member);
+    Optional<Member> find(Long memberId);
+
+    Long save(Member member);
 }

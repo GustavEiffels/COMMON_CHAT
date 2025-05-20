@@ -34,6 +34,11 @@ public class MemberRepositoryImpl implements MemberRepository {
     }
 
     @Override
+    public Optional<Member> find(Long memberId) {
+        return jpaRepository.findById(memberId).map(MemberEntity::toDomain);
+    }
+
+    @Override
     public Long create(Member member) {
         return jpaRepository.save(MemberEntity.fromDomain(member)).getMemberId();
     }

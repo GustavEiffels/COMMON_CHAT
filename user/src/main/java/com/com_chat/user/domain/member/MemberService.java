@@ -4,6 +4,11 @@ import com.com_chat.user.support.exceptions.BaseException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
+
+import java.util.Optional;
+
+import static org.springframework.util.StringUtils.hasText;
 
 @Service
 @RequiredArgsConstructor
@@ -19,7 +24,7 @@ public class MemberService {
             throw new BaseException(MemberException.ALREADY_EXIST_NICK);
         }
         return DomainDto.SignUpInfo.fromDomain(
-                repository.create(
+                repository.save(
                         command.toDomain(
                                 passwordEncoder.encode(
                                         command.password()
@@ -40,4 +45,23 @@ public class MemberService {
         );
     }
 
+// UPDATE
+
+    public void update(DomainDto.UpdateCommand command){
+        Optional<Member> findMember = repository.find(command.memberId());
+
+        if ( findMember.isEmpty() ){
+            throw new BaseException(MemberException.NOT_EXIST);
+        }
+
+        Member changeMember = findMember.get();
+        if ( hasText(command.password()) ){
+            changeMember = changeMember.changePassword(passwordEncoder.encode(command.password()));
+        }
+        if ( hasText(command.profilePath()) ){
+            changeMember = changeMember.changeProfilePath(command.profilePath());
+        }
+
+        repository.save(changeMember);
+    }
 }

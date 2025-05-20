@@ -96,4 +96,17 @@ public record FacadeDto() {
             );
         }
     }
+
+
+// UPDATE
+    public record UpdateCriteria(
+            Long memberId,
+            String password,
+            String profilePath
+    )
+    {
+        public DomainDto.UpdateCommand toCommand(){
+            return new DomainDto.UpdateCommand(memberId,password,profilePath);
+        }
+    }
 }
