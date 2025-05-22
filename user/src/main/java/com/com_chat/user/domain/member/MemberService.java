@@ -46,7 +46,6 @@ public class MemberService {
     }
 
 // UPDATE
-
     public void update(DomainDto.UpdateCommand command){
         Optional<Member> findMember = repository.find(command.memberId());
 

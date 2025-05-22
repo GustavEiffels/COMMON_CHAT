@@ -9,7 +9,6 @@ import java.util.List;
 
 public record ApiDto() {
 // SIGN UP
-
     public record SignUpRequest(
             String nick,
             String email,
@@ -38,8 +37,8 @@ public record ApiDto() {
         }
     }
 
+    // FIND
 
-    // FIND OUT
     public record SearchRequest(
             MemberEnum.QueryType type,
             String query,
@@ -106,7 +105,7 @@ public record ApiDto() {
         }
     }
 
-    // PATCH
+    // UPDATE
     public record UpdateRequest(
             Long memberId,
             String password,

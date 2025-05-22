@@ -3,7 +3,6 @@ package com.com_chat.user.domain.member;
 import com.com_chat.user.support.exceptions.BaseException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.util.StringUtils;
 
 import java.util.List;
 import java.util.regex.Pattern;
@@ -57,7 +56,7 @@ public record DomainDto() {
         }
     }
 
-    // Search
+// Search
     public record SearchCommand(
             MemberEnum.QueryType type,
             String query,
