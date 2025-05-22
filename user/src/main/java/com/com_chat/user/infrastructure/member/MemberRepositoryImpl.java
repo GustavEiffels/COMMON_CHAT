@@ -14,7 +14,7 @@ import java.util.Optional;
 
 @Repository
 @RequiredArgsConstructor
-public class MemberRepositoryImpl implements MemberRepository {
+public class  MemberRepositoryImpl implements MemberRepository {
 
     private final MemberJpaRepository jpaRepository;
 
@@ -38,8 +38,9 @@ public class MemberRepositoryImpl implements MemberRepository {
         return jpaRepository.findById(memberId).map(MemberEntity::toDomain);
     }
 
+
     @Override
-    public Long create(Member member) {
+    public Long save(Member member) {
         return jpaRepository.save(MemberEntity.fromDomain(member)).getMemberId();
     }
 
