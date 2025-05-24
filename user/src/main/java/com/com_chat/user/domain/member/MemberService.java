@@ -45,6 +45,14 @@ public class MemberService {
         );
     }
 
+    public void existMember(Long memberId){
+        if ( repository.find(memberId).isEmpty() ){
+            throw new BaseException(MemberException.NOT_EXIST);
+        }
+    }
+
+
+
 // UPDATE
     public void update(DomainDto.UpdateCommand command){
         Optional<Member> findMember = repository.find(command.memberId());

@@ -30,7 +30,6 @@ public class RelationshipService {
         return DomainDto.CreateInfo.fromDomain(repository.save(command.toDomain()));
     }
 
-    @Transactional
     public DomainDto.UpdateInfo update(DomainDto.UpdateCommand command) {
 
         Relationship relationship = repository.findId(command.relationshipId())
