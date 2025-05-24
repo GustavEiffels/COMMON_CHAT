@@ -52,7 +52,4 @@ public class RelationshipRepositoryCustomImpl implements RelationshipRepositoryC
     private BooleanExpression eqRelationshipType(RelationshipEnum.RelationType type){
         return type != null ? relationshipEntity.type.eq(type) : null;
     }
-    private BooleanExpression eqNotDelete(){
-        return relationshipEntity.IsDelete.eq(false);
-    }
 }

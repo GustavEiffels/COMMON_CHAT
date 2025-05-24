@@ -14,7 +14,7 @@ public record ApiDto() {
     }
     public record CreateResponse(Long relationshipId){
         public static CreateResponse fromResult(FacadeDto.CreateResult result){
-            return new CreateResponse(response.relationshipId());
+            return new CreateResponse(result.relationshipId());
         }
     }
 
