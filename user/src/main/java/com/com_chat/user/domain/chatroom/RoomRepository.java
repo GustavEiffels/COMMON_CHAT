@@ -6,10 +6,12 @@ import java.util.Optional;
 public interface RoomRepository {
 
     Optional<Room> findRoom(Long roomId);
-
+    Room saveRoom(Room room);
     List<Room> findRoom(Long loginMemberId, Long otherMemberId, RoomEnum.RoomType type);
 
-    Room saveRoom(Room room);
+   void deleteParticipant(Participant participant);
+
+    Optional<Participant> findParticipant(Long loginMemberId, Long chatRoomId);
 
     List<Participant> saveParticipants(List<Participant> participants);
 }

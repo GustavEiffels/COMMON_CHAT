@@ -27,14 +27,12 @@ public record DomainDto() {
         public Room toDomain(){
             return new Room(null,type,ownerId);
         }
-
         public List<Participant> toDomain(Long chatroomId){
             return memberIds.stream()
                     .map(memberId -> new Participant(null,memberId,chatroomId,type))
                     .toList();
         }
     }
-
     public record CreateInfo(
             Long roomId,
             RoomEnum.RoomType type
@@ -45,6 +43,25 @@ public record DomainDto() {
                     room.roomId(),
                     room.type()
             );
+        }
+    }
+
+
+    public record ExitCommand(
+            Long ownerId,
+            Long roomId,
+            Long nextOwnerId
+    )
+    {
+    }
+
+    public record ExitInfo(
+            Long roomId,
+            RoomEnum.RoomType type
+    )
+    {
+        public static ExitInfo fromDomain(Participant participant){
+            return new ExitInfo(participant.chatroomId(), participant.type());
         }
     }
 }

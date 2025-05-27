@@ -8,6 +8,7 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 import java.util.List;
+import java.util.Optional;
 
 import static com.com_chat.user.infrastructure.chatroom.enttiy.QParticipantEntity.participantEntity;
 import static com.com_chat.user.infrastructure.chatroom.enttiy.QRoomEntity.roomEntity;
@@ -36,4 +37,5 @@ public class RoomRepositoryCustomImpl implements RoomRepositoryCustom{
                 .toList();
 
     }
+
 }

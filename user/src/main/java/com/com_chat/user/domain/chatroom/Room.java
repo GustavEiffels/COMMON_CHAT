@@ -5,4 +5,8 @@ public record Room(
         RoomEnum.RoomType type,
         Long ownerId
 )
-{}
+{
+    public Room changeOwner(Long newOwnerId){
+        return new Room(roomId,type,newOwnerId);
+    }
+}
