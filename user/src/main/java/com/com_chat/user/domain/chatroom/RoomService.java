@@ -1,9 +1,7 @@
 package com.com_chat.user.domain.chatroom;
 
-import com.com_chat.user.infrastructure.chatroom.enttiy.ParticipantEntity;
 import com.com_chat.user.support.exceptions.BaseException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Optional;
@@ -56,6 +54,11 @@ public class RoomService {
         repository.deleteParticipant(participant);
 
         return DomainDto.ExitInfo.fromDomain(participant);
+    }
+
+
+    public DomainDto.FindRoomInfo find(DomainDto.FindRoomCommand command){
+        return DomainDto.FindRoomInfo.fromDomainList(repository.findRoomByMember(command.memberId()));
     }
 
 }

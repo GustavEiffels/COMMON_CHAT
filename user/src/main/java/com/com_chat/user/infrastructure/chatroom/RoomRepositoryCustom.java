@@ -10,4 +10,7 @@ public interface RoomRepositoryCustom {
     List<Room> findRoom(Long loginMemberId, Long otherMemberId, RoomEnum.RoomType type);
 
 
+    List<Room> findRoomByMemberId(Long loginMemberId);
+
+
 }

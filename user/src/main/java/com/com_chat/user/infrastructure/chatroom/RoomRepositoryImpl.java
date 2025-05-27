@@ -25,6 +25,11 @@ public class RoomRepositoryImpl implements RoomRepository {
     }
 
     @Override
+    public List<Room> findRoomByMember(Long memberId) {
+        return roomJpaRepository.findRoomByMemberId(memberId);
+    }
+
+    @Override
     public Optional<Participant> findParticipant(Long loginMemberId, Long chatRoomId) {
         return Optional.empty();
     }

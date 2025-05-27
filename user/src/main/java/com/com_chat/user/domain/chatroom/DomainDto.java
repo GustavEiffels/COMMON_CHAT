@@ -3,6 +3,8 @@ package com.com_chat.user.domain.chatroom;
 import com.com_chat.user.support.exceptions.BaseException;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 public record DomainDto() {
 
@@ -64,4 +66,32 @@ public record DomainDto() {
             return new ExitInfo(participant.chatroomId(), participant.type());
         }
     }
+
+    public record FindRoomCommand(
+            Long memberId
+    )
+    {}
+
+    public record FindRoomInfo(
+        List<FindRoomDto> privateRooms,
+        List<FindRoomDto> multiRooms
+    )
+    {
+        public static FindRoomInfo fromDomainList(List<Room> roomList) {
+            Map<Boolean, List<FindRoomDto>> partitioned = roomList.stream()
+                    .map(room -> new FindRoomDto(room.type(), room.roomId()))
+                    .collect(Collectors.partitioningBy(dto -> dto.type == RoomEnum.RoomType.PRIVATE));
+
+            return new FindRoomInfo(
+                    partitioned.get(true),   // PRIVATE
+                    partitioned.get(false)   // MULTI
+            );
+        }
+    }
+
+    public record FindRoomDto(
+            RoomEnum.RoomType type,
+            Long roomId
+    )
+    {}
 }

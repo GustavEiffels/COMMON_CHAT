@@ -38,4 +38,20 @@ public class RoomRepositoryCustomImpl implements RoomRepositoryCustom{
 
     }
 
+    @Override
+    public List<Room> findRoomByMemberId(Long loginMemberId) {
+        return queryFactory.select(roomEntity)
+                .from(participantEntity)
+                .join(roomEntity)
+                .on(participantEntity.chatroomId.eq(roomEntity.roomId))
+                .where(
+                        participantEntity.memberId.eq(loginMemberId),
+                        participantEntity.isDelete.isFalse(),
+                        roomEntity.isDelete.isFalse()
+                )
+                .fetch()
+                .stream().map(RoomEntity::toDomain)
+                .toList();
+    }
+
 }
