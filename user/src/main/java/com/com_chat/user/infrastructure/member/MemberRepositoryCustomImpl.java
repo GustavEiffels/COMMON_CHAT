@@ -28,8 +28,7 @@ public class MemberRepositoryCustomImpl implements MemberRepositoryCustom{
     @Override
     public Page<Member> findByQuery(MemberEnum.QueryType type, String query,Pageable pageable) {
 
-        List<Member> results = queryFactory.select(memberEntity)
-                .from(memberEntity)
+        List<Member> results = queryFactory.selectFrom(memberEntity)
                 .where(type.equals(MemberEnum.QueryType.EMAIL) ? likeEmail(query) : likeNick(query))
                 .offset(pageable.getOffset())
                 .limit(Math.min(pageable.getPageSize(), 10)) // Limit to 10 results max
