@@ -11,4 +11,7 @@ public interface RelationshipRepositoryCustom {
     List<Relationship> find(Long fromMemberId, Long toMemberId, RelationshipEnum.RelationType type);
 
     Optional<Relationship> findOne(Long fromMemberId, Long toMemberId);
+
+    List<Relationship> findByMemberId(Long fromMemberId);
+
 }

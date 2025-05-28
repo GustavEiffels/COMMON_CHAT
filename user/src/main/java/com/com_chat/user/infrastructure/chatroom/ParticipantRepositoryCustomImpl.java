@@ -2,7 +2,6 @@ package com.com_chat.user.infrastructure.chatroom;
 
 
 import com.com_chat.user.domain.chatroom.Participant;
-import com.com_chat.user.domain.chatroom.Room;
 import com.com_chat.user.infrastructure.chatroom.enttiy.ParticipantEntity;
 import com.com_chat.user.infrastructure.chatroom.enttiy.QParticipantEntity;
 import com.querydsl.core.types.dsl.BooleanExpression;
@@ -14,6 +13,7 @@ import java.util.Optional;
 
 import static com.com_chat.user.infrastructure.chatroom.enttiy.QParticipantEntity.participantEntity;
 
+
 @Repository
 @RequiredArgsConstructor
 public class ParticipantRepositoryCustomImpl implements ParticipantRepositoryCustom {
@@ -22,6 +22,8 @@ public class ParticipantRepositoryCustomImpl implements ParticipantRepositoryCus
 
     @Override
     public Optional<Participant> findParticipant(Long memberId, Long roomId) {
+
+
         Optional<ParticipantEntity> optionalParticipant = Optional.ofNullable(queryFactory.selectFrom(participantEntity)
                 .where(
                         eqMemberId(memberId),
@@ -29,8 +31,9 @@ public class ParticipantRepositoryCustomImpl implements ParticipantRepositoryCus
                         participantEntity.isDelete.isFalse()
                 ).fetchOne());
 
-        return optionalParticipant.map(ParticipantEntity::toDomain);
+         return optionalParticipant.map(ParticipantEntity::toDomain);
     }
+
 
     BooleanExpression eqMemberId(Long memberId){
         return memberId != null ? participantEntity.memberId.eq(memberId):null;

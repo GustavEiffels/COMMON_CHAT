@@ -23,7 +23,8 @@ public class RelationshipRepositoryCustomImpl implements RelationshipRepositoryC
                 .where(
                         eqFromMemberId(fromMemberId),
                         eqToMemberId(toMemberId),
-                        eqRelationshipType(type)
+                        eqRelationshipType(type),
+                        relationshipEntity.isDelete.isFalse()
                 )
                 .fetch()
                 .stream()
@@ -40,6 +41,17 @@ public class RelationshipRepositoryCustomImpl implements RelationshipRepositoryC
                         eqToMemberId(toMemberId)
                 )
                 .fetchOne()).map(RelationshipEntity::toDomain);
+    }
+
+    @Override
+    public List<Relationship> findByMemberId(Long fromMemberId) {
+        return queryFactory.selectFrom(relationshipEntity)
+                .where(
+                        eqFromMemberId(fromMemberId),
+                        relationshipEntity.type.ne(RelationshipEnum.RelationType.NONE)
+                )
+                .fetch().stream().map(RelationshipEntity::toDomain)
+                .toList();
     }
 
 

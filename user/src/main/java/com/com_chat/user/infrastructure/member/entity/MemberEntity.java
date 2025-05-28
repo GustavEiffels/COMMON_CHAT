@@ -6,6 +6,7 @@ import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.springframework.data.annotation.LastModifiedDate;
 
 import java.time.LocalDateTime;
 
@@ -35,6 +36,9 @@ public class MemberEntity extends BaseEntity {
 
     private String profilePath;
 
+    private String refreshToken;
+
+    @LastModifiedDate
     private LocalDateTime lastLoginDate;
 
 
@@ -48,6 +52,7 @@ public class MemberEntity extends BaseEntity {
         entity.lastLoginDate = member.lastLoginDate();
         entity.password      = member.password();
         entity.profilePath    = member.profilePath();
+        entity.refreshToken  = member.refreshToken();;
 
         return entity;
     }
@@ -59,6 +64,7 @@ public class MemberEntity extends BaseEntity {
                 email,
                 password,
                 profilePath,
+                refreshToken,
                 lastLoginDate
         );
     }

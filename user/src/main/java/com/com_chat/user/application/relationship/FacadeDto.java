@@ -1,6 +1,6 @@
 package com.com_chat.user.application.relationship;
 
-import com.com_chat.user.domain.relationship.DomainDto;
+import com.com_chat.user.domain.relationship.DomainRelationsDto;
 import com.com_chat.user.domain.relationship.RelationshipEnum;
 
 public record FacadeDto() {
@@ -12,8 +12,8 @@ public record FacadeDto() {
 
     )
     {
-        public DomainDto.CreateCommand toCommand(){
-            return new DomainDto.CreateCommand(
+        public DomainRelationsDto.CreateCommand toCommand(){
+            return new DomainRelationsDto.CreateCommand(
                     fromMemberId,
                     toMemberId,
                     createType
@@ -25,7 +25,7 @@ public record FacadeDto() {
             Long relationshipId
     )
     {
-        public static CreateResult fromInfo( DomainDto.CreateInfo createInfo){
+        public static CreateResult fromInfo( DomainRelationsDto.CreateInfo createInfo){
             return new CreateResult(createInfo.relationshipId());
         }
     }
@@ -39,8 +39,8 @@ public record FacadeDto() {
 
     )
     {
-        public DomainDto.UpdateCommand toCommand(){
-            return new DomainDto.UpdateCommand(
+        public DomainRelationsDto.UpdateCommand toCommand(){
+            return new DomainRelationsDto.UpdateCommand(
                     relationshipId,
                     command,
                     update
@@ -52,7 +52,7 @@ public record FacadeDto() {
             Long relationshipId
     )
     {
-        public static UpdateResult fromInfo( DomainDto.UpdateInfo updateInfo ){
+        public static UpdateResult fromInfo( DomainRelationsDto.UpdateInfo updateInfo ){
             return new UpdateResult(updateInfo.relationshipId());
         }
     }

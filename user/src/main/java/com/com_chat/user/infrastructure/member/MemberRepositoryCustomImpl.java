@@ -45,6 +45,14 @@ public class MemberRepositoryCustomImpl implements MemberRepositoryCustom{
         return new PageImpl<>(results, pageable, total != null ? total : 0L);
     }
 
+    @Override
+    public List<Member> findMembers(List<Long> memberIds) {
+        return queryFactory.selectFrom(memberEntity)
+                .where(memberEntity.memberId.in(memberIds), memberEntity.isDelete.isFalse())
+                .stream().map(MemberEntity::toDomain)
+                .toList();
+    }
+
     private BooleanExpression likeEmail(String query){
         return hasText(query) ? memberEntity.email.containsIgnoreCase(query) : null;
     }

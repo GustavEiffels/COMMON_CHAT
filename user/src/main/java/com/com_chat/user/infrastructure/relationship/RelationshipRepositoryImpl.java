@@ -25,6 +25,11 @@ public class RelationshipRepositoryImpl implements RelationshipRepository {
         return jpaRepository.find(fromMemberId,toMemberId,type);
     }
 
+    @Override
+    public List<Relationship> findByLogin(Long fromMemberId) {
+        return jpaRepository.findByMemberId(fromMemberId);
+    }
+
 
     @Override
     public Relationship save(Relationship relationship) {

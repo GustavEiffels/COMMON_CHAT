@@ -12,14 +12,14 @@ public class RoomService {
     private final RoomRepository repository;
 
 // 채팅방 생성
-    public DomainDto.CreateInfo create(DomainDto.CreateCommand command){
+    public DomainRoomDto.CreateInfo create(DomainRoomDto.CreateCommand command){
         if (command.type().equals(RoomEnum.RoomType.PRIVATE)) {
             Long otherId = command.memberIds().get(0);
             List<Room> roomList = repository.findRoom(command.ownerId(), otherId, RoomEnum.RoomType.PRIVATE);
 
             if (!roomList.isEmpty()) {
                 if (roomList.size() == 1) {
-                    return DomainDto.CreateInfo.fromDomain(roomList.get(0));
+                    return DomainRoomDto.CreateInfo.fromDomain(roomList.get(0));
                 }
                 throw new BaseException(ChatroomException.PRIVATE_MULTI_EXCEPTION);
             }
@@ -29,12 +29,12 @@ public class RoomService {
 
         repository.saveParticipants(command.toDomain(room.roomId()));
 
-        return DomainDto.CreateInfo.fromDomain(room);
+        return DomainRoomDto.CreateInfo.fromDomain(room);
     }
 
 
 // 채팅방 나가기
-    public DomainDto.ExitInfo goOut(DomainDto.ExitCommand command) {
+    public DomainRoomDto.ExitInfo goOut(DomainRoomDto.ExitCommand command) {
         Optional<Participant> participantOp = repository.findParticipant(command.ownerId(), command.roomId());
 
         Optional<Room> optionalRoom = repository.findRoom(command.roomId());
@@ -53,12 +53,12 @@ public class RoomService {
         }
         repository.deleteParticipant(participant);
 
-        return DomainDto.ExitInfo.fromDomain(participant);
+        return DomainRoomDto.ExitInfo.fromDomain(participant);
     }
 
 
-    public DomainDto.FindRoomInfo find(DomainDto.FindRoomCommand command){
-        return DomainDto.FindRoomInfo.fromDomainList(repository.findRoomByMember(command.memberId()));
+    public DomainRoomDto.FindRoomInfo find(DomainRoomDto.FindRoomCommand command){
+        return DomainRoomDto.FindRoomInfo.fromDomainList(repository.findRoomByMember(command.memberId()));
     }
 
 }

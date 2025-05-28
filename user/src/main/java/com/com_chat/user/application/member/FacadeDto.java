@@ -1,22 +1,24 @@
 package com.com_chat.user.application.member;
 
-import com.com_chat.user.domain.member.DomainDto;
+import com.com_chat.user.domain.chatroom.RoomEnum;
+import com.com_chat.user.domain.member.DomainMemberDto;
 import com.com_chat.user.domain.member.MemberEnum;
-import com.com_chat.user.interfaces.member.ApiDto;
+import com.com_chat.user.domain.relationship.RelationshipEnum;
 import org.springframework.data.domain.Pageable;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 public record FacadeDto() {
+
+ // SIGN UP
     public record SignUpCriteria(
             String nick,
             String email,
             String password,
             String profilePath
     ){
-        public DomainDto.SignUpCommand toCommand(){
-            return new DomainDto.SignUpCommand(
+        public DomainMemberDto.SignUpCommand toCommand(){
+            return new DomainMemberDto.SignUpCommand(
                     nick,
                     email,
                     password,
@@ -28,8 +30,9 @@ public record FacadeDto() {
     public record SignUpResult(
             Long memberId
     ){
-        public static SignUpResult fromInfo(DomainDto.SignUpInfo info){
+        public static SignUpResult fromInfo(DomainMemberDto.SignUpInfo info){
             return new SignUpResult(info.memberId());
+
         }
     }
 
@@ -42,15 +45,14 @@ public record FacadeDto() {
 
     )
     {
-        public DomainDto.SearchCommand toCommand(){
-            return new DomainDto.SearchCommand(
+        public DomainMemberDto.SearchCommand toCommand(){
+            return new DomainMemberDto.SearchCommand(
                     queryType,
                     query,
                     pageable
             );
         }
     }
-
 
     public record SearchResult(
             List<SearchFacadeDto> members,
@@ -62,7 +64,7 @@ public record FacadeDto() {
     )
     {
         public static SearchResult fromInfo(
-                DomainDto.SearchInfo info
+                DomainMemberDto.SearchInfo info
         ){
             return new SearchResult(
                     info.members().stream()
@@ -85,7 +87,7 @@ public record FacadeDto() {
     )
     {
         public static SearchFacadeDto fromDomain(
-                DomainDto.SearchDomainDto domainDto
+                DomainMemberDto.SearchDomainDto domainDto
         )
         {
             return new SearchFacadeDto(
@@ -97,7 +99,6 @@ public record FacadeDto() {
         }
     }
 
-
 // UPDATE
     public record UpdateCriteria(
             Long memberId,
@@ -105,8 +106,58 @@ public record FacadeDto() {
             String profilePath
     )
     {
-        public DomainDto.UpdateCommand toCommand(){
-            return new DomainDto.UpdateCommand(memberId,password,profilePath);
+        public DomainMemberDto.UpdateCommand toCommand(){
+            return new DomainMemberDto.UpdateCommand(memberId,password,profilePath);
+        }
+    }
+
+// LOGIN
+    public record LoginCriteria(
+        String email,
+        String password
+    )
+    {
+        public DomainMemberDto.LoginCommand toCommand(){
+            return new DomainMemberDto.LoginCommand(email,password);
+        }
+    }
+
+    public record LoginResult(
+            Long memberId,
+            String accessToken,
+            String refreshToken,
+            String nick,
+            List<LoginRoom> privateRoom,
+            List<LoginRoom> multiRoom,
+            List<LoginRelationship> followList,
+            List<LoginRelationship> blockList,
+            List<LoginMemberInfo> memberInfoList
+    )
+    { }
+
+    public record LoginRoom(
+        Long roomId,
+        RoomEnum.RoomType roomType
+    )
+    { }
+
+    public record LoginRelationship(
+        Long relationshipId,
+        Long memberId,
+        RelationshipEnum.RelationType type
+    )
+    {}
+
+    public record LoginMemberInfo(
+            Long memberId,
+            String nick
+    )
+    {
+        public static LoginMemberInfo fromDomain(DomainMemberDto.LoginMemberDto domainDto ){
+            return new LoginMemberInfo(
+                    domainDto.memberId(),
+                    domainDto.nick()
+            );
         }
     }
 }

@@ -1,10 +1,8 @@
 package com.com_chat.user.domain.relationship;
 
-import com.com_chat.user.infrastructure.relationship.entity.RelationshipEntity;
 import com.com_chat.user.support.exceptions.BaseException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 
@@ -15,7 +13,12 @@ public class RelationshipService {
     private final RelationshipRepository repository;
 
 
-    public DomainDto.CreateInfo create(DomainDto.CreateCommand command){
+    public DomainRelationsDto.FindInfo loginFind(Long memberId){
+        return DomainRelationsDto.FindInfo.fromDomainList(repository.findByLogin(memberId));
+    }
+
+
+    public DomainRelationsDto.CreateInfo create(DomainRelationsDto.CreateCommand command){
 
         Optional<Relationship> optionalRelationship = repository.findOne(command.fromMemberId(), command.toMemberId());
 
@@ -25,12 +28,12 @@ public class RelationshipService {
             RelationshipEnum.RelationType currentType = fndRelationShip.type();
 
             validateUpdate(RelationshipEnum.Command.ADD,createType,currentType);
-            return DomainDto.CreateInfo.fromDomain(repository.save(fndRelationShip.updateRelationType(createType)));
+            return DomainRelationsDto.CreateInfo.fromDomain(repository.save(fndRelationShip.updateRelationType(createType)));
         }
-        return DomainDto.CreateInfo.fromDomain(repository.save(command.toDomain()));
+        return DomainRelationsDto.CreateInfo.fromDomain(repository.save(command.toDomain()));
     }
 
-    public DomainDto.UpdateInfo update(DomainDto.UpdateCommand command) {
+    public DomainRelationsDto.UpdateInfo update(DomainRelationsDto.UpdateCommand command) {
 
         Relationship relationship = repository.findId(command.relationshipId())
                 .orElseThrow(() -> new BaseException(RelationshipException.NOT_EXIST));
@@ -42,7 +45,7 @@ public class RelationshipService {
         validateUpdate(commandType, toUpdateType, currentType);
 
         Relationship updatedRelationship = updateRelationship(relationship, commandType, toUpdateType);
-        return DomainDto.UpdateInfo.fromDomain(repository.save(updatedRelationship));
+        return DomainRelationsDto.UpdateInfo.fromDomain(repository.save(updatedRelationship));
     }
 
     public void validateUpdate(RelationshipEnum.Command command,

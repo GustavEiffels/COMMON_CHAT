@@ -8,6 +8,7 @@ import java.util.Optional;
 
 public interface MemberRepository {
 
+    List<Member> findMembers(List<Long> memberIds);
     Page<Member> findByQuery(MemberEnum.QueryType type, String query, Pageable pageable);
 
     Optional<Member> findByNick(String nick);

@@ -19,6 +19,11 @@ public class  MemberRepositoryImpl implements MemberRepository {
     private final MemberJpaRepository jpaRepository;
 
     @Override
+    public List<Member> findMembers(List<Long> memberIds) {
+        return null;
+    }
+
+    @Override
     public Page<Member> findByQuery(MemberEnum.QueryType type, String query, Pageable pageable) {
         return jpaRepository.findByQuery(type,query,pageable);
     }

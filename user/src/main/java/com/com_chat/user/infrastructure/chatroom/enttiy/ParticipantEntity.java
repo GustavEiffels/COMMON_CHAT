@@ -19,7 +19,7 @@ public class ParticipantEntity extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    private Long participateId;
+    private Long participantId;
 
     private Long memberId;
 
@@ -30,12 +30,12 @@ public class ParticipantEntity extends BaseEntity {
 
 
     public Participant toDomain(){
-        return new Participant(participateId,memberId,chatroomId,type);
+        return new Participant(participantId,memberId,chatroomId,type);
     }
 
     public static ParticipantEntity fromDomain(Participant participant){
         ParticipantEntity entity = new ParticipantEntity();
-        entity.participateId = participant.participateId();
+        entity.participantId = participant.participantId();
         entity.chatroomId    = participant.chatroomId();
         entity.memberId      = participant.memberId();
         entity.type          = participant.type();

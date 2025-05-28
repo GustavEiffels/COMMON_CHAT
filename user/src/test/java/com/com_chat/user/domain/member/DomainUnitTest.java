@@ -23,6 +23,7 @@ class DomainUnitTest {
                     "email@test.com",
                     "Qwer!@34#",
                     "example/path",
+                    "TEST",
                     LocalDateTime.now());
         });
 
@@ -44,6 +45,7 @@ class DomainUnitTest {
                     "ema",
                     "Qwer!@34#",
                     "example/path",
+                    "TEST",
                     LocalDateTime.now());
         });
 
@@ -66,6 +68,7 @@ class DomainUnitTest {
                     "email@naver.com",
                     "123",
                     "example/path",
+                    "TEST",
                     LocalDateTime.now());
         });
 

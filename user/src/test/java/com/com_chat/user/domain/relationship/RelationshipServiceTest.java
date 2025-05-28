@@ -7,7 +7,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Optional;
@@ -40,7 +39,7 @@ class RelationshipServiceTest {
         Long fromMemberId = 1L;
         Long toMemberId   = 2L;
         RelationshipEnum.RelationType relationType = RelationshipEnum.RelationType.FAVORITE;
-        DomainDto.CreateCommand command = new DomainDto.CreateCommand(
+        DomainRelationsDto.CreateCommand command = new DomainRelationsDto.CreateCommand(
                 fromMemberId,
                 toMemberId,
                 relationType

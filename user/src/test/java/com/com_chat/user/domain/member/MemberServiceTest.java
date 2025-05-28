@@ -1,13 +1,11 @@
 package com.com_chat.user.domain.member;
 
 import com.com_chat.user.support.exceptions.BaseException;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
@@ -33,7 +31,7 @@ class MemberServiceTest {
     void already_exist_nick(){
         // given
         String nick = "duplicateNick";
-        DomainDto.SignUpCommand command = new DomainDto.SignUpCommand(
+        DomainMemberDto.SignUpCommand command = new DomainMemberDto.SignUpCommand(
                 nick,
                 "email@example.com",
                 "Qwer!@34$",
@@ -46,6 +44,7 @@ class MemberServiceTest {
                 "email@example.com",
                 "Qwer!@34$",
                 "profile",
+                "TEST",
                 LocalDateTime.now()
         );
         when(repository.findByNick(nick)).thenReturn(Optional.of(mockMember));
