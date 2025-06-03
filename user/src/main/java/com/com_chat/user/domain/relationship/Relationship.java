@@ -1,6 +1,7 @@
 package com.com_chat.user.domain.relationship;
 
 public record Relationship(
+
         Long relationshipId,
         Long fromMemberId,
         Long toMemberId,

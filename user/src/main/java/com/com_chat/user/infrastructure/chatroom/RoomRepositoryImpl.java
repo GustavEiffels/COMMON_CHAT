@@ -21,7 +21,7 @@ public class RoomRepositoryImpl implements RoomRepository {
     private final RoomJpaRepository roomJpaRepository;
     @Override
     public Optional<Room> findRoom(Long roomId) {
-        return Optional.empty();
+        return roomJpaRepository.findById(roomId).map(RoomEntity::toDomain);
     }
 
     @Override

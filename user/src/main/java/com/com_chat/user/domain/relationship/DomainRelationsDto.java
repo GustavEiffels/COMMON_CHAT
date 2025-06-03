@@ -28,7 +28,7 @@ public record DomainRelationsDto() {
     )
     {
         public static CreateInfo fromDomain(Relationship relationship){
-            return new CreateInfo(relationship.toMemberId());
+            return new CreateInfo(relationship.relationshipId());
         }
     }
 

@@ -20,7 +20,7 @@ public class  MemberRepositoryImpl implements MemberRepository {
 
     @Override
     public List<Member> findMembers(List<Long> memberIds) {
-        return null;
+        return jpaRepository.findMembers(memberIds);
     }
 
     @Override

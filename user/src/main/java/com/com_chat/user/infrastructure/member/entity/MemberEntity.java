@@ -16,7 +16,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(
         uniqueConstraints = {
-                @UniqueConstraint(columnNames = {"email","nick","profilePath"})
+                @UniqueConstraint(columnNames = {"email","nick"})
         }
 )
 public class MemberEntity extends BaseEntity {
@@ -25,10 +25,10 @@ public class MemberEntity extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long   memberId;
 
-    @Column(nullable = false)
+    @Column(nullable = false,unique = true)
     private String nick;
 
-    @Column(nullable = false)
+    @Column(nullable = false,unique = true)
     private String email;
 
     @Column(nullable = false)

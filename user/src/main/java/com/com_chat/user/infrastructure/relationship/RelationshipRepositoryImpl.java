@@ -33,7 +33,7 @@ public class RelationshipRepositoryImpl implements RelationshipRepository {
 
     @Override
     public Relationship save(Relationship relationship) {
-        return jpaRepository.save(RelationshipEntity.fromDomain(relationship).entityRestore()).toDomain();
+        return jpaRepository.save(RelationshipEntity.fromDomain(relationship)).toDomain();
     }
 
     @Override

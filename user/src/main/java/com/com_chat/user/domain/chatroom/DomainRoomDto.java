@@ -2,6 +2,7 @@ package com.com_chat.user.domain.chatroom;
 
 import com.com_chat.user.support.exceptions.BaseException;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -17,11 +18,13 @@ public record DomainRoomDto() {
     )
     {
         public CreateCommand{
-            if( type.equals(RoomEnum.RoomType.PRIVATE) && memberIds().size() != 1 ){
+
+
+            if( type.equals(RoomEnum.RoomType.PRIVATE) && memberIds.size() != 1 ){
                 throw new BaseException(ChatroomException.PRIVATE_MEMBER_MULTI);
             }
 
-            if( type.equals(RoomEnum.RoomType.MULTI) && memberIds().isEmpty() ){
+            if( type.equals(RoomEnum.RoomType.MULTI) && memberIds.isEmpty() ){
                 throw new BaseException(ChatroomException.MULTI_MEMBER_NOT_EXIST);
             }
         }
@@ -30,6 +33,7 @@ public record DomainRoomDto() {
             return new Room(null,type,ownerId);
         }
         public List<Participant> toDomain(Long chatroomId){
+            memberIds.add(ownerId);
             return memberIds.stream()
                     .map(memberId -> new Participant(null,memberId,chatroomId,type))
                     .toList();

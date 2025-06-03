@@ -6,6 +6,7 @@ import com.com_chat.user.domain.member.DomainMemberDto;
 import com.com_chat.user.domain.member.MemberService;
 import com.com_chat.user.domain.relationship.DomainRelationsDto;
 import com.com_chat.user.domain.relationship.RelationshipService;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -19,6 +20,7 @@ public class MemberFacade {
     private final RoomService roomService;
     private final RelationshipService relationshipService;
 
+    @Transactional
     public FacadeDto.SignUpResult signUp(FacadeDto.SignUpCriteria criteria){
         return FacadeDto.SignUpResult.fromInfo(memberService.create(criteria.toCommand()));
     }
@@ -27,10 +29,13 @@ public class MemberFacade {
         return FacadeDto.SearchResult.fromInfo(memberService.search(criteria.toCommand()));
     }
 
+    @Transactional
     public void update(FacadeDto.UpdateCriteria criteria){
         memberService.update(criteria.toCommand());
     }
 
+
+    @Transactional
     public FacadeDto.LoginResult login(FacadeDto.LoginCriteria criteria){
         DomainMemberDto.LoginInfo memberLoginInfo = memberService.login(criteria.toCommand());
 
@@ -39,6 +44,7 @@ public class MemberFacade {
         DomainRoomDto.FindRoomInfo roomInfo = roomService.find(
                 new DomainRoomDto.FindRoomCommand(findMemberId)
         );
+
 
         // private Room
         List<FacadeDto.LoginRoom> privateRoom = roomInfo.privateRooms().stream()
@@ -58,17 +64,11 @@ public class MemberFacade {
                 .toList();
 
         // block list
-        List<FacadeDto.LoginRelationship> blockList = relationInfo.followList().stream()
+        List<FacadeDto.LoginRelationship> blockList = relationInfo.blockList().stream()
                 .map(block -> new FacadeDto.LoginRelationship(block.relationshipId(), block.toMemberId(),block.type()))
                 .toList();
 
-
-        List<Long> memberIds = Stream.concat(
-                        relationInfo.followList().stream().map(DomainRelationsDto.FindDto::relationshipId),
-                        relationInfo.blockList().stream().map(DomainRelationsDto.FindDto::relationshipId)
-                )
-                .distinct()
-                .toList();
+        List<Long> memberIds = followList.stream().map(FacadeDto.LoginRelationship::memberId).toList();
 
         List<FacadeDto.LoginMemberInfo> memberInfoList = memberService.findMemberInfo(memberIds).memberDtoList()
                 .stream()
