@@ -25,7 +25,6 @@ repositories {
 
 dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
-	implementation 'org.mongodb:mongodb-driver-sync:4.11.1'
 
 	implementation 'org.springframework.boot:spring-boot-starter-webflux'
 
@@ -36,9 +35,17 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-websocket'
 	implementation 'org.webjars:stomp-websocket:2.3.4'
 
+
+//	// Test-container
+//	testImplementation 'org.springframework.boot:spring-boot-testcontainers'
+//	testImplementation 'org.testcontainers:redis'
+//	testImplementation 'org.testcontainers:mongodb'
+
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'
+
+
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }

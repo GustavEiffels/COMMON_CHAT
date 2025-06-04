@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>STOMP WebSocket Connection Test</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.6.1/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 20px; background-color: #f4f7f6; color: #333; }
+        .container { max-width: 600px; margin: 30px auto; padding: 25px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); background-color: #fff; }
+        h1 { color: #2c3e50; text-align: center; margin-bottom: 25px; }
+        .status-section { text-align: center; margin-bottom: 20px; font-size: 1.1em; }
+        .status-section span { font-weight: bold; padding: 5px 10px; border-radius: 4px; }
+        .connected { background-color: #e6ffe6; color: #28a745; }
+        .disconnected { background-color: #ffe6e6; color: #dc3545; }
+        .buttons { display: flex; justify-content: center; gap: 15px; margin-bottom: 25px; }
+        button {
+            padding: 12px 25px;
+            font-size: 1em;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        button:hover:not(:disabled) {
+            transform: translateY(-2px);
+        }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+        #connectButton { background-color: #007bff; color: white; }
+        #connectButton:hover:not(:disabled) { background-color: #0056b3; }
+        #disconnectButton { background-color: #6c757d; color: white; }
+        #disconnectButton:hover:not(:disabled) { background-color: #5a6268; }
+
+        .message-log {
+            background-color: #e9ecef;
+            border: 1px solid #ced4da;
+            border-radius: 5px;
+            min-height: 150px;
+            max-height: 300px;
+            overflow-y: auto;
+            padding: 10px;
+            font-family: 'Cascadia Code', 'Consolas', monospace;
+            font-size: 0.9em;
+            line-height: 1.4;
+            color: #495057;
+            margin-top: 20px;
+        }
+        .log-item { margin-bottom: 5px; padding-bottom: 5px; border-bottom: 1px dashed #c0c0c0; }
+        .log-item:last-child { border-bottom: none; }
+        .log-connect { color: #007bff; }
+        .log-disconnect { color: #dc3545; }
+        .log-error { color: #ff0000; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>STOMP WebSocket Connection Test</h1>
+
+        <div class="status-section">
+            Connection Status: <span id="status" class="disconnected">Disconnected</span>
+        </div>
+
+        <div class="buttons">
+            <button id="connectButton">Connect</button>
+            <button id="disconnectButton" disabled>Disconnect</button>
+        </div>
+
+        <h2>Event Log</h2>
+        <div id="messageLog" class="message-log">
+            </div>
+    </div>
+
+    <script>
+        let stompClient = null;
+        const SERVER_URL = 'http://localhost:8888'; // <-- 서버 주소: 반드시 Spring Boot 서버의 실제 주소로 변경하세요!
+        const CHAT_ENDPOINT = '/chat'; // <-- StompConfig의 addEndpoint() 경로와 일치해야 합니다.
+
+        // DOM 요소 가져오기
+        const statusSpan = document.getElementById('status');
+        const connectButton = document.getElementById('connectButton');
+        const disconnectButton = document.getElementById('disconnectButton');
+        const messageLogDiv = document.getElementById('messageLog');
+
+        // --- UI 상태 업데이트 함수 ---
+        function setConnected(connected) {
+            connectButton.disabled = connected;
+            disconnectButton.disabled = !connected;
+            statusSpan.className = connected ? 'connected' : 'disconnected';
+            statusSpan.textContent = connected ? 'Connected' : 'Disconnected';
+        }
+
+        // --- 로그 메시지 추가 함수 ---
+        function logMessage(message, type = '') {
+            const logItem = document.createElement('div');
+            logItem.classList.add('log-item');
+            if (type) logItem.classList.add('log-' + type);
+            logItem.textContent = `${new Date().toLocaleTimeString()} - ${message}`;
+            messageLogDiv.prepend(logItem); // 최신 메시지가 위로 오도록 prepend 사용
+            // Optional: Keep log div from getting too large
+            if (messageLogDiv.children.length > 50) {
+                messageLogDiv.removeChild(messageLogDiv.lastChild);
+            }
+        }
+
+        // --- 연결 함수 ---
+        function connect() {
+            logMessage('Attempting to connect...');
+            // SockJS를 사용하여 WebSocket 연결 시도 (WebSocket이 지원되지 않으면 HTTP 폴백 사용)
+            const socket = new SockJS(`${SERVER_URL}${CHAT_ENDPOINT}`);
+            stompClient = Stomp.over(socket);
+
+            stompClient.connect({}, function (frame) {
+                setConnected(true);
+                logMessage('STOMP Connected: ' + frame, 'connect');
+                console.log('STOMP Connected:', frame); // 개발자 콘솔에도 출력
+
+                // 예시: 연결 성공 시 구독할 토픽
+                // 이 부분은 서버의 MessageBrokerRegistry.enableSimpleBroker 설정과 매칭되어야 합니다.
+                // stompClient.subscribe('/receive/public_messages', function (message) {
+                //     logMessage('Received public message: ' + message.body);
+                // });
+
+                // 예시: 개인 메시지 구독
+                // StompConfig의 setUserDestinationPrefix("/send/private/")와 연동
+                // 클라이언트는 항상 '/user/' 접두사를 사용합니다.
+                // stompClient.subscribe('/user/queue/private_messages', function (message) {
+                //     logMessage('Received private message: ' + message.body);
+                // });
+
+            }, function (error) {
+                setConnected(false);
+                logMessage('STOMP Connection Error: ' + error, 'error');
+                console.error('STOMP Connection Error:', error); // 개발자 콘솔에도 출력
+                if (stompClient && stompClient.ws && stompClient.ws.readyState === WebSocket.CLOSED) {
+                    logMessage("WebSocket underlying connection was closed.", 'error');
+                }
+            });
+        }
+
+        // --- 연결 해제 함수 ---
+        function disconnect() {
+            if (stompClient !== null) {
+                stompClient.disconnect(function() {
+                    setConnected(false);
+                    logMessage("Disconnected gracefully.", 'disconnect');
+                    console.log("Disconnected gracefully.");
+                });
+            } else {
+                setConnected(false); // 연결 시도 안된 상태에서 disconnect 누를 경우 대비
+                logMessage("No active STOMP client to disconnect.", 'disconnect');
+            }
+        }
+
+        // --- 이벤트 리스너 등록 ---
+        connectButton.addEventListener('click', connect);
+        disconnectButton.addEventListener('click', disconnect);
+
+        // 초기 상태 설정
+        setConnected(false);
+    </script>
+</body>
+</html>

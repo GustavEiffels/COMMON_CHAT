@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class MessageController {
     private final MessageService messageService;
 
-    @MessageMapping("/send")
+    @MessageMapping("/")
     public void send(@RequestBody MessageApiDto.SendMsgRequest request){
         messageService.send(request.toCommand());
     }

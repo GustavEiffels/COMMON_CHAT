@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket Sender Only Test (localhost:8888)</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.6.1/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 20px; background-color: #f8f9fa; color: #343a40; }
+        .container { max-width: 600px; margin: 30px auto; padding: 25px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); background-color: #ffffff; }
+        h1 { color: #0056b3; text-align: center; margin-bottom: 25px; }
+        .status-section { text-align: center; margin-bottom: 20px; font-size: 1.1em; }
+        .status-section span { font-weight: bold; padding: 5px 10px; border-radius: 4px; }
+        .connected { background-color: #d4edda; color: #28a745; }
+        .disconnected { background-color: #f8d7da; color: #dc3545; }
+        .buttons { display: flex; justify-content: center; gap: 15px; margin-bottom: 25px; }
+        button {
+            padding: 10px 20px;
+            font-size: 1em;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        button:hover:not(:disabled) { transform: translateY(-2px); }
+        button:disabled { background-color: #e9ecef; cursor: not-allowed; color: #6c757d; }
+        #connectButton { background-color: #007bff; color: white; }
+        #connectButton:hover:not(:disabled) { background-color: #0056b3; }
+        #disconnectButton { background-color: #dc3545; color: white; }
+        #disconnectButton:hover:not(:disabled) { background-color: #c82333; }
+
+        .input-group { margin-bottom: 15px; display: flex; align-items: center; gap: 10px; }
+        .input-group label { min-width: 80px; font-weight: bold; }
+        .input-group input[type="text"], .input-group input[type="number"] {
+            flex-grow: 1;
+            padding: 8px 12px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 0.95em;
+        }
+        .log-area { margin-top: 20px; }
+        .message-log {
+            background-color: #f1f3f5;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            min-height: 150px;
+            max-height: 300px;
+            overflow-y: auto;
+            padding: 10px;
+            font-family: 'Consolas', 'monospace';
+            font-size: 0.9em;
+            line-height: 1.5;
+            color: #495057;
+        }
+        .log-item { margin-bottom: 5px; padding-bottom: 5px; border-bottom: 1px dashed #e0e0e0; }
+        .log-item:last-child { border-bottom: none; }
+        .log-sent { color: #007bff; }
+        .log-system { color: #6c757d; }
+        .log-error { color: #dc3545; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>WebSocket Sender Only Test</h1>
+        <p>Connecting to: <span style="font-weight: bold;">http://localhost:8888</span></p>
+
+        <div class="status-section">
+            Connection Status: <span id="status" class="disconnected">Disconnected</span>
+        </div>
+
+        <div class="buttons">
+            <button id="connectButton">Connect</button>
+            <button id="disconnectButton" disabled>Disconnect</button>
+        </div>
+
+        <h2>Send Message</h2>
+        <div class="input-group">
+            <label for="roomIdInput">Room ID:</label>
+            <input type="number" id="roomIdInput" value="1" placeholder="Enter Room ID">
+        </div>
+        <div class="input-group">
+            <label for="senderIdInput">Sender ID:</label>
+            <input type="text" id="senderIdInput" value="userSender" placeholder="Enter your User ID">
+        </div>
+        <div class="input-group">
+            <label for="messageContentInput">Message:</label>
+            <input type="text" id="messageContentInput" placeholder="Type your message">
+            <button id="sendMessageButton" disabled>Send</button>
+        </div>
+
+        <div class="log-area">
+            <h3>Sent Messages Log</h3>
+            <div id="messageLog" class="message-log"></div>
+        </div>
+
+    </div>
+
+    <script>
+        let stompClient = null;
+
+        // --- 설정 ---
+        const SERVER_URL = 'http://localhost:8888'; // ★★★ localhost:8888로 고정 ★★★
+        const CHAT_ENDPOINT = '/chat';
+        const MESSAGE_SEND_DESTINATION = '/send/'; // @MessageMapping("/") 와 StompConfig의 /send 결합
+
+        // --- DOM 요소 ---
+        const statusSpan = document.getElementById('status');
+        const connectButton = document.getElementById('connectButton');
+        const disconnectButton = document.getElementById('disconnectButton');
+
+        const roomIdInput = document.getElementById('roomIdInput');
+        const senderIdInput = document.getElementById('senderIdInput');
+        const messageContentInput = document.getElementById('messageContentInput');
+        const sendMessageButton = document.getElementById('sendMessageButton');
+        const messageLogDiv = document.getElementById('messageLog');
+
+        // --- UI 상태 업데이트 함수 ---
+        function setConnected(connected) {
+            connectButton.disabled = connected;
+            disconnectButton.disabled = !connected;
+            sendMessageButton.disabled = !connected; // 연결 상태에 따라 보내기 버튼 활성화/비활성화
+            statusSpan.className = connected ? 'connected' : 'disconnected';
+            statusSpan.textContent = connected ? 'Connected' : 'Disconnected';
+            if (!connected) {
+                logMessage('Disconnected from server.', 'system');
+            }
+        }
+
+        // --- 로그 메시지 추가 함수 ---
+        function logMessage(message, type = 'system') {
+            const logItem = document.createElement('div');
+            logItem.classList.add('log-item', `log-${type}`);
+            logItem.textContent = `${new Date().toLocaleTimeString()} - ${message}`;
+            messageLogDiv.appendChild(logItem);
+            messageLogDiv.scrollTop = messageLogDiv.scrollHeight; // 스크롤 하단으로
+        }
+
+        // --- WebSocket 연결 함수 ---
+        function connect() {
+            logMessage('Attempting to connect to ' + SERVER_URL + CHAT_ENDPOINT + '...', 'system');
+            const socket = new SockJS(`${SERVER_URL}${CHAT_ENDPOINT}`);
+            stompClient = Stomp.over(socket);
+
+            stompClient.connect({}, function (frame) {
+                setConnected(true);
+                logMessage('STOMP Connected to server.', 'system');
+                console.log('STOMP Connected:', frame);
+
+            }, function (error) {
+                setConnected(false);
+                logMessage('STOMP Connection Error: ' + error, 'error');
+                console.error('STOMP Connection Error:', error);
+            });
+        }
+
+        // --- WebSocket 연결 해제 함수 ---
+        function disconnect() {
+            if (stompClient !== null) {
+                stompClient.disconnect(function() {
+                    setConnected(false);
+                    logMessage("Disconnected gracefully.", 'system');
+                    console.log("Disconnected gracefully.");
+                });
+            } else {
+                setConnected(false);
+                logMessage("No active STOMP client to disconnect.", 'system');
+            }
+        }
+
+        // --- 메시지 전송 함수 ---
+        function sendMessage() {
+            const roomId = roomIdInput.value;
+            const senderId = senderIdInput.value;
+            const content = messageContentInput.value;
+
+            if (!roomId || !senderId || !content) {
+                alert("Room ID, Sender ID, and Message cannot be empty.");
+                return;
+            }
+
+            // MessageApiDto.SendMsgRequest에 맞게 페이로드 구성
+            const messagePayload = {
+                id: null, // 서버에서 자동 생성되도록 null로 설정 (String 타입)
+                msgRoomCnt: 0, // 필요하다면 적절한 초기값 설정
+                messageContents: content,
+                userPid: 1, // 필요하다면 적절한 초기값 설정
+                roomPid: parseInt(roomId), // 서버에서 Long으로 받으므로 parseInt
+                createDateTime: new Date().toISOString(), // ISO 8601 형식으로 전달 (서버 LocalDateTime에 매핑)
+                createDate: new Date().toISOString().split('T')[0] // ISO-MM-DD 형식 (서버 LocalDate에 매핑)
+            };
+
+            // 서버의 @MessageMapping("/") 와 StompConfig의 setApplicationDestinationPrefixes("/send") 결합
+            // 최종 목적지는 "/send/" 또는 "/send"가 됩니다.
+            const destination = MESSAGE_SEND_DESTINATION; // "/send/" 로 설정된 상수 사용
+            logMessage(`Sending to ${destination}: ${JSON.stringify(messagePayload)}`, 'sent');
+            stompClient.send(destination, {}, JSON.stringify(messagePayload));
+
+            messageContentInput.value = ''; // 메시지 입력창 초기화
+        }
+
+        // --- 이벤트 리스너 등록 ---
+        connectButton.addEventListener('click', connect);
+        disconnectButton.addEventListener('click', disconnect);
+        sendMessageButton.addEventListener('click', sendMessage);
+
+        // 초기 상태 설정
+        setConnected(false);
+    </script>
+</body>
+</html>

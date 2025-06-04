@@ -22,10 +22,10 @@ public class RedisPublisher {
     public void sendMessageToClient(Message message)  {
         try {
             String toMessage = objectMapper.writeValueAsString(message);
+            System.out.println("toMessage - send message : "+toMessage);
             redisTemplate.convertAndSend(chattingTopic.getTopic(),toMessage);
         } catch (JsonProcessingException e) {
             throw new BaseException(MessageException.MESSAGE_JSON_CONVERT);
         }
     }
-
 }

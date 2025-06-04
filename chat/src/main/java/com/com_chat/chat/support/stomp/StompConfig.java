@@ -18,6 +18,7 @@ public class StompConfig implements WebSocketMessageBrokerConfigurer {
     public void configureMessageBroker(MessageBrokerRegistry registry) {
         registry.enableSimpleBroker("/receive"); // 구독 할 수 있는 경로로 설정
         registry.setApplicationDestinationPrefixes("/send");       // 보내는 경로  prefixes
+        registry.setUserDestinationPrefix("/send/private/");       // private 하게 보낼때
     }
 
 

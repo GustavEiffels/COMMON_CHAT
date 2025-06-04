@@ -21,4 +21,9 @@ public class MessageService {
         sendRedis.sendMessageToClient(createMessage);
     }
 
+    public void sendPrivate(MessageDomainDto.SendMsgCommand command){
+        Optional<Message> message = repository.findLastMessage(command.roomPid());
+        Message     createMessage = repository.save(command.toDomain(message.map(value -> value.msgRoomCnt() + 1).orElse(1L)));
+    }
+
 }

@@ -4,7 +4,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 public record Message(
-         Long id,
+         String id,
          Long msgRoomCnt,
          String messageContents,
          Long userPid,

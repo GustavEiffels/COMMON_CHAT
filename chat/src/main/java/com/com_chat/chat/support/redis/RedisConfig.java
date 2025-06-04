@@ -1,6 +1,8 @@
 package com.com_chat.chat.support.redis;
 
 import com.com_chat.chat.infrastructure.redis.RedisPublisher;
+import com.com_chat.chat.infrastructure.redis.RedisSubscriber;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.data.redis.RedisProperties;
 import org.springframework.context.annotation.Bean;
@@ -26,15 +28,10 @@ public class RedisConfig {
     }
 
     @Bean
-    public ChannelTopic inviteChannelTopic(){
-        return new ChannelTopic("invite");
-    }
-
-    @Bean
     public RedisTemplate<String,String> redisTemplate(RedisConnectionFactory connectionFactory){
         RedisTemplate<String,String> template = new RedisTemplate<>();
         template.setConnectionFactory(connectionFactory);
-        template.setValueSerializer(new StringRedisSerializer());
+        template.setValueSerializer(new StringRedisSerializer()); 
         template.setKeySerializer(new StringRedisSerializer());
         return template;
     }
@@ -44,32 +41,25 @@ public class RedisConfig {
         RedisStandaloneConfiguration redisStandaloneConfiguration = new RedisStandaloneConfiguration();
         redisStandaloneConfiguration.setHostName(redisProperties.getHost());
         redisStandaloneConfiguration.setPort(redisProperties.getPort());
-        redisStandaloneConfiguration.setPassword(redisProperties.getPassword());
+        redisStandaloneConfiguration.setPassword("ssw1234");
         return new LettuceConnectionFactory(redisStandaloneConfiguration);
     }
 
     @Bean
     public RedisMessageListenerContainer redisMessageListenerContainer(
             MessageListenerAdapter chatListenerAdapter,
-            MessageListenerAdapter inviteListenerAdapter,
-            ChannelTopic chatChannelTopic,
-            ChannelTopic inviteChannelTopic
+            ChannelTopic chatChannelTopic
     ){
         RedisMessageListenerContainer container = new RedisMessageListenerContainer();
         container.setConnectionFactory(redisConnectionFactory());
         container.addMessageListener(chatListenerAdapter,chatChannelTopic);
-        container.addMessageListener(inviteListenerAdapter,inviteChannelTopic);
         return container;
     }
 
     @Bean
-    public MessageListenerAdapter chatListenerAdapter(RedisPublisher subscriber){
+    public MessageListenerAdapter chatListenerAdapter(RedisSubscriber subscriber){ 
         return new MessageListenerAdapter(subscriber,"sendMessageToClient");
     }
 
-    @Bean
-    public MessageListenerAdapter inviteListenerAdapter(RedisPublisher subscriber){
-        return new MessageListenerAdapter(subscriber,"sendInviteToClient");
-    }
 
 }
