@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -23,6 +24,8 @@ public class MemberService {
     private final PasswordEncoder passwordEncoder;
     private final MemberRepository repository;
     private final JwtHandler jwtHandler;
+
+
 
 
 // SIGNUP
@@ -43,9 +46,6 @@ public class MemberService {
     }
 
 // SEARCH
-
-
-
     public DomainMemberDto.SearchInfo search(DomainMemberDto.SearchCommand command){
         return DomainMemberDto.SearchInfo.fromDomain(
                 repository.findByQuery(
@@ -106,5 +106,13 @@ public class MemberService {
                         .toList());
     }
 
+// FIND
+    public DomainMemberDto.AuthenticationInfo findAuthenticationMember(){
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if( authentication != null && authentication.isAuthenticated() ){
+            return new DomainMemberDto.AuthenticationInfo((Long) authentication.getPrincipal());
+        }
+        throw new BaseException(MemberException.NOT_AUTHENTICATION_MEMBER);
+    }
 
 }

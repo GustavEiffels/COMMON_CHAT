@@ -14,14 +14,12 @@ public class RelationshipFacade {
     private final RelationshipService relationshipService;
 
     public FacadeDto.CreateResult create(FacadeDto.CreateCriteria criteria){
-        memberService.existMember(criteria.fromMemberId());
-        return FacadeDto.CreateResult.fromInfo(relationshipService.create(criteria.toCommand()));
+        Long fromMemberId = memberService.findAuthenticationMember().memberId();
+        memberService.existMember(fromMemberId);
+        return FacadeDto.CreateResult.fromInfo(relationshipService.create(criteria.toCommand(fromMemberId)));
     }
 
     public FacadeDto.UpdateResult update(FacadeDto.UpdateCriteria criteria){
         return FacadeDto.UpdateResult.fromInfo( relationshipService.update(criteria.toCommand()));
     }
-
-
-
 }

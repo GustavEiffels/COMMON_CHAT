@@ -14,8 +14,8 @@ public enum MemberException implements ExceptionInterface {
     INVALID_EMAIL("INVALID_EMAIL","유효한 이메일 형식이 아닙니다."),
     INVALID_PASSWORD("INVALID_PASSWORD","대소문자, 숫자, 특수문자를 하나씩 포함해야 합니다."),
     ALREADY_EXIST_NICK("ALREADY_EXIST_NAME","이미 사용중인 닉네임 입니다."),
-
-    NOT_EXIST("NOT_EXIST","사용자 정보를 찾을 수 없습니다.")
+    NOT_EXIST("NOT_EXIST","사용자 정보를 찾을 수 없습니다."),
+    NOT_AUTHENTICATION_MEMBER("NOT_AUTHENTICATION_MEMBER","검증된 사용자가 아닙니다.")
     ;
     private final String code;
     private final String message;

@@ -6,13 +6,12 @@ import com.com_chat.user.domain.relationship.RelationshipEnum;
 public record FacadeDto() {
 
     public record CreateCriteria(
-            Long fromMemberId,
             Long toMemberId,
             RelationshipEnum.RelationType createType
 
     )
     {
-        public DomainRelationsDto.CreateCommand toCommand(){
+        public DomainRelationsDto.CreateCommand toCommand(Long fromMemberId){
             return new DomainRelationsDto.CreateCommand(
                     fromMemberId,
                     toMemberId,
@@ -35,8 +34,6 @@ public record FacadeDto() {
             Long relationshipId,
             RelationshipEnum.Command command,
             RelationshipEnum.RelationType update
-
-
     )
     {
         public DomainRelationsDto.UpdateCommand toCommand(){
@@ -56,6 +53,4 @@ public record FacadeDto() {
             return new UpdateResult(updateInfo.relationshipId());
         }
     }
-
-
 }

@@ -167,9 +167,10 @@ public record DomainMemberDto() {
     public record LoginMemberDto(
             Long memberId,
             String nick
-    ){
+    ){}
 
-    }
+// FIND MEMBER
+    public record AuthenticationInfo(Long memberId){}
 
 
 

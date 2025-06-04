@@ -8,8 +8,8 @@ public record ApiDto() {
             Long toMemberId
     )
     {
-        public FacadeDto.CreateCriteria toCriteria(Long fromMemberId,RelationshipEnum.RelationType createType){
-            return new FacadeDto.CreateCriteria(fromMemberId,toMemberId, createType);
+        public FacadeDto.CreateCriteria toCriteria(RelationshipEnum.RelationType createType){
+            return new FacadeDto.CreateCriteria(toMemberId, createType);
         }
     }
     public record CreateResponse(Long relationshipId){

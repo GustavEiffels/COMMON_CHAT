@@ -10,7 +10,7 @@ import org.testcontainers.utility.DockerImageName;
 
 
 
-//@Configuration
+@Configuration
 public class TestContainersConfiguration {
     @SuppressWarnings("resource")
     public static final MySQLContainer<?> MYSQL_CONTAINER = new MySQLContainer<>(DockerImageName.parse("mysql:8.0"))

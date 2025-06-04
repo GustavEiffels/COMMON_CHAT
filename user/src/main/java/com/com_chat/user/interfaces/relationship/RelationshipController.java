@@ -25,7 +25,6 @@ public class RelationshipController {
                 ApiDto.CreateResponse.fromResult(
                         relationshipFacade.create(
                                 request.toCriteria(
-                                        1L,
                                         RelationshipEnum.RelationType.FAVORITE
                                 )
                         )
@@ -41,7 +40,6 @@ public class RelationshipController {
                 ApiDto.CreateResponse.fromResult(
                         relationshipFacade.create(
                                 request.toCriteria(
-                                        1L,
                                         RelationshipEnum.RelationType.BLOCK
                                 )
                         )
