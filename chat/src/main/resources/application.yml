@@ -1,0 +1,15 @@
+server:
+  port: 8888
+spring:
+  application:
+    name: chat
+  data:
+    mongodb:
+      host: localhost
+      port: 27017
+      database: chatdb
+  redis:
+    host: 127.0.0.1
+    port: 6379
+    password: ssw1234
+
