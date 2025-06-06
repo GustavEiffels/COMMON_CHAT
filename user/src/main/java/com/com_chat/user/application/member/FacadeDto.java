@@ -131,15 +131,16 @@ public record FacadeDto() {
             List<LoginRoom> multiRoom,
             List<LoginRelationship> followList,
             List<LoginRelationship> blockList,
-            List<LoginMemberInfo> memberInfoList
+            List<MemberNickInfo> memberInfoList
     )
-    { }
+    {}
 
     public record LoginRoom(
         Long roomId,
+        String roomTitle,
         RoomEnum.RoomType roomType
     )
-    { }
+    {}
 
     public record LoginRelationship(
         Long relationshipId,
@@ -148,13 +149,13 @@ public record FacadeDto() {
     )
     {}
 
-    public record LoginMemberInfo(
+    public record MemberNickInfo(
             Long memberId,
             String nick
     )
     {
-        public static LoginMemberInfo fromDomain(DomainMemberDto.LoginMemberDto domainDto ){
-            return new LoginMemberInfo(
+        public static MemberNickInfo fromDomain(DomainMemberDto.MemberNickDto domainDto ){
+            return new MemberNickInfo(
                     domainDto.memberId(),
                     domainDto.nick()
             );

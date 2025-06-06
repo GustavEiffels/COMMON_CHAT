@@ -8,6 +8,8 @@ public interface RoomRepository {
     Optional<Room> findRoom(Long roomId);
 
     List<Room> findRoomByMember(Long memberId);
+
+    List<DomainRoomDto.FindRoomDto> findRoomByMemberWhenLogin(Long memberId);
     Room saveRoom(Room room);
     List<Room> findRoom(Long loginMemberId, Long otherMemberId, RoomEnum.RoomType type);
 

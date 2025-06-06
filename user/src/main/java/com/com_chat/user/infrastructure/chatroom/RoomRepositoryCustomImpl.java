@@ -1,9 +1,11 @@
 package com.com_chat.user.infrastructure.chatroom;
 
 
+import com.com_chat.user.domain.chatroom.DomainRoomDto;
 import com.com_chat.user.domain.chatroom.Room;
 import com.com_chat.user.domain.chatroom.RoomEnum;
 import com.com_chat.user.infrastructure.chatroom.enttiy.RoomEntity;
+import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
@@ -52,6 +54,28 @@ public class RoomRepositoryCustomImpl implements RoomRepositoryCustom{
                 .fetch()
                 .stream().map(RoomEntity::toDomain)
                 .toList();
+    }
+
+    @Override
+    public List<DomainRoomDto.FindRoomDto> findRoomByMemberWhenLogin(Long memberId) {
+        return queryFactory.select(
+                        Projections.constructor(
+                                DomainRoomDto.FindRoomDto.class,
+                                roomEntity.type,
+                                participantEntity.roomTitle,
+                                roomEntity.roomId
+
+                        )
+                )
+                .from(participantEntity)
+                .join(roomEntity)
+                .on(participantEntity.chatroomId.eq(roomEntity.roomId))
+                .where(
+                        participantEntity.memberId.eq(memberId),
+                        participantEntity.isDelete.isFalse(),
+                        roomEntity.isDelete.isFalse()
+                )
+                .fetch();
     }
 
 }

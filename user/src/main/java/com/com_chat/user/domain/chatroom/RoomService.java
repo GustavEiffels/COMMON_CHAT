@@ -3,6 +3,8 @@ package com.com_chat.user.domain.chatroom;
 import com.com_chat.user.support.exceptions.BaseException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -26,8 +28,6 @@ public class RoomService {
         }
 
         Room room = repository.saveRoom(command.toDomain());
-
-        repository.saveParticipants(command.toDomain(room.roomId()));
 
         return DomainRoomDto.CreateInfo.fromDomain(room);
     }
@@ -56,9 +56,49 @@ public class RoomService {
         return DomainRoomDto.ExitInfo.fromDomain(participant);
     }
 
+    public void createRelation(DomainRoomDto.CreateRelationCommand command){
+        List<Participant> participants = new ArrayList<>();
 
-    public DomainRoomDto.FindRoomInfo find(DomainRoomDto.FindRoomCommand command){
-        return DomainRoomDto.FindRoomInfo.fromDomainList(repository.findRoomByMember(command.memberId()));
+        if( command.roomType().equals(RoomEnum.RoomType.PRIVATE) ){
+            command.participants().forEach(memberId->{
+                String roomTitle = "";
+                for(Long id : command.memberNickInfo().keySet() ){
+                    if(!id.equals(memberId)){
+                        roomTitle = command.memberNickInfo().get(id);
+                    }
+                }
+                participants.add(
+                        Participant.create(
+                                memberId,
+                                command.roomId(),
+                                roomTitle,
+                                RoomEnum.RoomType.PRIVATE
+                        )
+                );
+            });
+        }
+        else{
+            int     participantsCnt = command.participants().size();
+            String  roomTitle       = command.memberNickInfo().get(command.hostMemberId())+" with "+(participantsCnt-1);
+            command.participants().forEach(memberId->{
+                participants.add(
+                        Participant.create(
+                                memberId,
+                                command.roomId(),
+                                roomTitle,
+                                command.roomType()
+                        )
+                );
+            });
+        }
+
+        repository.saveParticipants(participants);
     }
+
+
+    public DomainRoomDto.FindRoomInfo findLogin(DomainRoomDto.FindRoomCommand command){
+        return DomainRoomDto.FindRoomInfo.fromDomainList(repository.findRoomByMemberWhenLogin(command.memberId()));
+    }
+
 
 }

@@ -25,12 +25,14 @@ public class ParticipantEntity extends BaseEntity {
 
     private Long chatroomId;
 
+    private String roomTitle;
+
     private RoomEnum.RoomType type;
 
 
 
     public Participant toDomain(){
-        return new Participant(participantId,memberId,chatroomId,type);
+        return new Participant(participantId,memberId,chatroomId,roomTitle,type);
     }
 
     public static ParticipantEntity fromDomain(Participant participant){
@@ -39,6 +41,7 @@ public class ParticipantEntity extends BaseEntity {
         entity.chatroomId    = participant.chatroomId();
         entity.memberId      = participant.memberId();
         entity.type          = participant.type();
+        entity.roomTitle     = participant.roomTitle();
 
         return entity;
     }

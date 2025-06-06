@@ -1,6 +1,5 @@
 package com.com_chat.user.domain.member;
 
-import com.com_chat.user.domain.relationship.DomainRelationsDto;
 import com.com_chat.user.support.exceptions.BaseException;
 import com.com_chat.user.support.jwt.JwtHandler;
 import com.com_chat.user.support.security.CustomUserDetails;
@@ -11,7 +10,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-
 import java.util.List;
 import java.util.Optional;
 
@@ -97,10 +95,10 @@ public class MemberService {
         return new DomainMemberDto.LoginInfo(member.memberId(),accessToken,refreshToken,member.nick());
     }
 
-    public DomainMemberDto.LoginMemberInfo findMemberInfo(List<Long> memberIds){
-        return new DomainMemberDto.LoginMemberInfo(
+    public DomainMemberDto.MemberNickInfo findMemberInfo(List<Long> memberIds){
+        return new DomainMemberDto.MemberNickInfo(
                 repository.findMembers(memberIds).stream()
-                        .map(member -> new DomainMemberDto.LoginMemberDto(
+                        .map(member -> new DomainMemberDto.MemberNickDto(
                                 member.memberId(),
                                 member.nick()))
                         .toList());

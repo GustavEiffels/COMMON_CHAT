@@ -41,18 +41,18 @@ public class MemberFacade {
 
         Long findMemberId = memberLoginInfo.memberId();
 
-        DomainRoomDto.FindRoomInfo roomInfo = roomService.find(
+        DomainRoomDto.FindRoomInfo roomInfo = roomService.findLogin(
                 new DomainRoomDto.FindRoomCommand(findMemberId)
         );
 
 
         // private Room
         List<FacadeDto.LoginRoom> privateRoom = roomInfo.privateRooms().stream()
-                .map(info->new FacadeDto.LoginRoom(info.roomId(), info.type())).toList();
+                .map(info->new FacadeDto.LoginRoom(info.roomId(),info.roomTitle(), info.type())).toList();
 
         // private Multi
         List<FacadeDto.LoginRoom> multiRoom   = roomInfo.multiRooms().stream()
-                .map(info->new FacadeDto.LoginRoom(info.roomId(), info.type())).toList();
+                .map(info->new FacadeDto.LoginRoom(info.roomId(), info.roomTitle(),info.type())).toList();
 
 
         DomainRelationsDto.FindInfo relationInfo = relationshipService.loginFind(findMemberId);
@@ -70,9 +70,9 @@ public class MemberFacade {
 
         List<Long> memberIds = followList.stream().map(FacadeDto.LoginRelationship::memberId).toList();
 
-        List<FacadeDto.LoginMemberInfo> memberInfoList = memberService.findMemberInfo(memberIds).memberDtoList()
+        List<FacadeDto.MemberNickInfo> memberInfoList = memberService.findMemberInfo(memberIds).memberDtoList()
                 .stream()
-                .map(FacadeDto.LoginMemberInfo::fromDomain)
+                .map(FacadeDto.MemberNickInfo::fromDomain)
                 .toList();
 
 

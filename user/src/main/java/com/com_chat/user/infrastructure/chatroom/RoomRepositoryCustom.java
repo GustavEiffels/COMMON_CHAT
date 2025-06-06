@@ -1,5 +1,6 @@
 package com.com_chat.user.infrastructure.chatroom;
 
+import com.com_chat.user.domain.chatroom.DomainRoomDto;
 import com.com_chat.user.domain.chatroom.Room;
 import com.com_chat.user.domain.chatroom.RoomEnum;
 
@@ -11,6 +12,9 @@ public interface RoomRepositoryCustom {
 
 
     List<Room> findRoomByMemberId(Long loginMemberId);
+
+
+    List<DomainRoomDto.FindRoomDto> findRoomByMemberWhenLogin(Long memberId);
 
 
 }

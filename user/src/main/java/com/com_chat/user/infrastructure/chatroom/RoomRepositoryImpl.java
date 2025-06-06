@@ -1,9 +1,6 @@
 package com.com_chat.user.infrastructure.chatroom;
 
-import com.com_chat.user.domain.chatroom.Participant;
-import com.com_chat.user.domain.chatroom.Room;
-import com.com_chat.user.domain.chatroom.RoomEnum;
-import com.com_chat.user.domain.chatroom.RoomRepository;
+import com.com_chat.user.domain.chatroom.*;
 import com.com_chat.user.infrastructure.chatroom.enttiy.ParticipantEntity;
 import com.com_chat.user.infrastructure.chatroom.enttiy.RoomEntity;
 import jakarta.servlet.http.Part;
@@ -27,6 +24,11 @@ public class RoomRepositoryImpl implements RoomRepository {
     @Override
     public List<Room> findRoomByMember(Long memberId) {
         return roomJpaRepository.findRoomByMemberId(memberId);
+    }
+
+    @Override
+    public List<DomainRoomDto.FindRoomDto> findRoomByMemberWhenLogin(Long memberId) {
+        return roomJpaRepository.findRoomByMemberWhenLogin(memberId);
     }
 
     @Override

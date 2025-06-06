@@ -20,7 +20,7 @@ public record DomainRoomDto() {
         public CreateCommand{
 
 
-            if( type.equals(RoomEnum.RoomType.PRIVATE) && memberIds.size() != 1 ){
+            if( type.equals(RoomEnum.RoomType.PRIVATE) && memberIds.size() != 2 ){
                 throw new BaseException(ChatroomException.PRIVATE_MEMBER_MULTI);
             }
 
@@ -31,12 +31,6 @@ public record DomainRoomDto() {
 
         public Room toDomain(){
             return new Room(null,type,ownerId);
-        }
-        public List<Participant> toDomain(Long chatroomId){
-            memberIds.add(ownerId);
-            return memberIds.stream()
-                    .map(memberId -> new Participant(null,memberId,chatroomId,type))
-                    .toList();
         }
     }
     public record CreateInfo(
@@ -51,6 +45,15 @@ public record DomainRoomDto() {
             );
         }
     }
+
+    public record CreateRelationCommand(
+            Long roomId,
+            Long hostMemberId,
+            List<Long> participants,
+            Map<Long, String> memberNickInfo,
+            RoomEnum.RoomType roomType
+    )
+    {}
 
 
     public record ExitCommand(
@@ -81,9 +84,9 @@ public record DomainRoomDto() {
         List<FindRoomDto> multiRooms
     )
     {
-        public static FindRoomInfo fromDomainList(List<Room> roomList) {
+        public static FindRoomInfo fromDomainList(List<DomainRoomDto.FindRoomDto> roomList) {
             Map<Boolean, List<FindRoomDto>> partitioned = roomList.stream()
-                    .map(room -> new FindRoomDto(room.type(), room.roomId()))
+                    .map(room -> new FindRoomDto(room.type(), room.roomTitle(), room.roomId()))
                     .collect(Collectors.partitioningBy(dto -> dto.type == RoomEnum.RoomType.PRIVATE));
 
             return new FindRoomInfo(
@@ -95,6 +98,7 @@ public record DomainRoomDto() {
 
     public record FindRoomDto(
             RoomEnum.RoomType type,
+            String roomTitle,
             Long roomId
     )
     {}

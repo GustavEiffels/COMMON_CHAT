@@ -160,11 +160,11 @@ public record DomainMemberDto() {
     )
     {}
 
-    public record LoginMemberInfo(
-            List<LoginMemberDto> memberDtoList
+    public record MemberNickInfo(
+            List<MemberNickDto> memberDtoList
     ){}
 
-    public record LoginMemberDto(
+    public record MemberNickDto(
             Long memberId,
             String nick
     ){}

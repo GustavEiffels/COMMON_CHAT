@@ -174,6 +174,7 @@ class MemberIntegrationTest {
 
         // then
         FacadeDto.LoginResult result = memberFacade.login(criteria);
+        System.out.println("result : "+result);
         Assertions.assertEquals(1,result.multiRoom().size(),"테스트 케이스의 멀티 룸 개수는 1개이다.");
         Assertions.assertEquals(9,result.privateRoom().size(),"테스트 케이스의 개인 채팅 룸 개수는 9 개이다.");
         Assertions.assertEquals(5,result.followList().size(),"테스트 케이스의 즐겨찾기에 추가한 사용자 수는 5명이다.");
