@@ -1,5 +1,6 @@
 package com.com_chat.user.interfaces.member;
 
+import com.com_chat.user.application.member.FacadeMemberDto;
 import com.com_chat.user.application.member.MemberFacade;
 import com.com_chat.user.support.exceptions.ApiResponse;
 import lombok.RequiredArgsConstructor;
@@ -17,33 +18,42 @@ public class MemberController {
 
 
     @PostMapping("")
-    public ApiResponse<ApiDto.SignUpResponse> signUp(
-            @RequestBody  ApiDto.SignUpRequest request
+    public ApiResponse<ApiMemberDto.SignUpResponse> signUp(
+            @RequestBody  ApiMemberDto.SignUpRequest request
     ){
         return ApiResponse.ok(
-                ApiDto.SignUpResponse.fromResult(
+                ApiMemberDto.SignUpResponse.fromResult(
                         memberFacade.signUp(request.toCriteria())
                 )
         );
     }
     @GetMapping("/search/{type}/{query}")
-    public ApiResponse<ApiDto.SearchResponse> search(
+    public ApiResponse<ApiMemberDto.SearchResponse> search(
             @PathVariable String type,
             @PathVariable String query,
             @PageableDefault(page = 0, size = 10, sort = "nick", direction = Sort.Direction.ASC) Pageable pageable){
         return ApiResponse.ok(
-                ApiDto.SearchResponse.fromResult(
-                        memberFacade.search(new ApiDto.SearchRequest(type,query,pageable).toCriteria())
+                ApiMemberDto.SearchResponse.fromResult(
+                        memberFacade.search(new ApiMemberDto.SearchRequest(type,query,pageable).toCriteria())
                 )
         );
     }
 
     @PatchMapping("/update")
     public ApiResponse<Void> update(
-            @RequestBody ApiDto.UpdateRequest request
+            @RequestBody ApiMemberDto.UpdateRequest request
     )
     {
         memberFacade.update(request.toCriteria());
         return ApiResponse.ok();
+    }
+
+    @PostMapping("/login")
+    public ApiResponse<ApiMemberDto.LoginResponse> login(@RequestBody ApiMemberDto.LoginRequest request){
+        return ApiResponse.ok(
+                ApiMemberDto.LoginResponse.fromResult(
+                        memberFacade.login(request.toCriteria())
+                )
+        );
     }
 }

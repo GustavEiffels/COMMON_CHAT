@@ -11,7 +11,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.stream.Stream;
 
 @Service
 @RequiredArgsConstructor
@@ -21,22 +20,22 @@ public class MemberFacade {
     private final RelationshipService relationshipService;
 
     @Transactional
-    public FacadeDto.SignUpResult signUp(FacadeDto.SignUpCriteria criteria){
-        return FacadeDto.SignUpResult.fromInfo(memberService.create(criteria.toCommand()));
+    public FacadeMemberDto.SignUpResult signUp(FacadeMemberDto.SignUpCriteria criteria){
+        return FacadeMemberDto.SignUpResult.fromInfo(memberService.create(criteria.toCommand()));
     }
 
-    public FacadeDto.SearchResult search(FacadeDto.SearchCriteria criteria){
-        return FacadeDto.SearchResult.fromInfo(memberService.search(criteria.toCommand()));
+    public FacadeMemberDto.SearchResult search(FacadeMemberDto.SearchCriteria criteria){
+        return FacadeMemberDto.SearchResult.fromInfo(memberService.search(criteria.toCommand()));
     }
 
     @Transactional
-    public void update(FacadeDto.UpdateCriteria criteria){
+    public void update(FacadeMemberDto.UpdateCriteria criteria){
         memberService.update(criteria.toCommand());
     }
 
 
     @Transactional
-    public FacadeDto.LoginResult login(FacadeDto.LoginCriteria criteria){
+    public FacadeMemberDto.LoginResult login(FacadeMemberDto.LoginCriteria criteria) {
         DomainMemberDto.LoginInfo memberLoginInfo = memberService.login(criteria.toCommand());
 
         Long findMemberId = memberLoginInfo.memberId();
@@ -45,38 +44,37 @@ public class MemberFacade {
                 new DomainRoomDto.FindRoomCommand(findMemberId)
         );
 
-
         // private Room
-        List<FacadeDto.LoginRoom> privateRoom = roomInfo.privateRooms().stream()
-                .map(info->new FacadeDto.LoginRoom(info.roomId(),info.roomTitle(), info.type())).toList();
+        List<FacadeMemberDto.RoomInfo> privateRoom = roomInfo.privateRooms().stream()
+                .map(info->new FacadeMemberDto.RoomInfo(info.roomId(),info.roomTitle(), info.type())).toList();
 
         // private Multi
-        List<FacadeDto.LoginRoom> multiRoom   = roomInfo.multiRooms().stream()
-                .map(info->new FacadeDto.LoginRoom(info.roomId(), info.roomTitle(),info.type())).toList();
+        List<FacadeMemberDto.RoomInfo> multiRoom   = roomInfo.multiRooms().stream()
+                .map(info->new FacadeMemberDto.RoomInfo(info.roomId(), info.roomTitle(),info.type())).toList();
 
 
         DomainRelationsDto.FindInfo relationInfo = relationshipService.loginFind(findMemberId);
 
 
         // follow list
-        List<FacadeDto.LoginRelationship> followList = relationInfo.followList().stream()
-                .map(follow -> new FacadeDto.LoginRelationship(follow.relationshipId(), follow.toMemberId(),follow.type()))
+        List<FacadeMemberDto.RelationShip> followList = relationInfo.followList().stream()
+                .map(follow -> new FacadeMemberDto.RelationShip(follow.relationshipId(), follow.toMemberId(),follow.type()))
                 .toList();
 
         // block list
-        List<FacadeDto.LoginRelationship> blockList = relationInfo.blockList().stream()
-                .map(block -> new FacadeDto.LoginRelationship(block.relationshipId(), block.toMemberId(),block.type()))
+        List<FacadeMemberDto.RelationShip> blockList = relationInfo.blockList().stream()
+                .map(block -> new FacadeMemberDto.RelationShip(block.relationshipId(), block.toMemberId(),block.type()))
                 .toList();
 
-        List<Long> memberIds = followList.stream().map(FacadeDto.LoginRelationship::memberId).toList();
+        List<Long> memberIds = followList.stream().map(FacadeMemberDto.RelationShip::memberId).toList();
 
-        List<FacadeDto.MemberNickInfo> memberInfoList = memberService.findMemberInfo(memberIds).memberDtoList()
+        List<FacadeMemberDto.MemberInfo> memberInfoList = memberService.findMemberInfo(memberIds).memberDtoList()
                 .stream()
-                .map(FacadeDto.MemberNickInfo::fromDomain)
+                .map(FacadeMemberDto.MemberInfo::fromDomain)
                 .toList();
 
 
-        return new FacadeDto.LoginResult(
+        return new FacadeMemberDto.LoginResult(
                 memberLoginInfo.memberId(),
                 memberLoginInfo.accessToken(),
                 memberLoginInfo.refreshToken(),

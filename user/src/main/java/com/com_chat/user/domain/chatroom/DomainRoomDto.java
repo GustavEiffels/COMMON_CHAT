@@ -45,7 +45,6 @@ public record DomainRoomDto() {
             );
         }
     }
-
     public record CreateRelationCommand(
             Long roomId,
             Long hostMemberId,
@@ -54,8 +53,6 @@ public record DomainRoomDto() {
             RoomEnum.RoomType roomType
     )
     {}
-
-
     public record ExitCommand(
             Long ownerId,
             Long roomId,
@@ -63,7 +60,6 @@ public record DomainRoomDto() {
     )
     {
     }
-
     public record ExitInfo(
             Long roomId,
             RoomEnum.RoomType type
@@ -73,12 +69,10 @@ public record DomainRoomDto() {
             return new ExitInfo(participant.chatroomId(), participant.type());
         }
     }
-
     public record FindRoomCommand(
             Long memberId
     )
     {}
-
     public record FindRoomInfo(
         List<FindRoomDto> privateRooms,
         List<FindRoomDto> multiRooms
@@ -95,7 +89,6 @@ public record DomainRoomDto() {
             );
         }
     }
-
     public record FindRoomDto(
             RoomEnum.RoomType type,
             String roomTitle,

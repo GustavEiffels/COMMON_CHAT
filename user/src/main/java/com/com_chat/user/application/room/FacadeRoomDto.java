@@ -11,7 +11,8 @@ public record FacadeRoomDto() {
             Long ownerId,
             List<Long> memberIds,
             RoomEnum.RoomType type
-    ){
+    )
+    {
 
         public DomainRoomDto.CreateCommand toCommand(){
             return new DomainRoomDto.CreateCommand(

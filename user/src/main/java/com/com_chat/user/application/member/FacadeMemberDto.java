@@ -8,7 +8,7 @@ import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 
-public record FacadeDto() {
+public record FacadeMemberDto() {
 
  // SIGN UP
     public record SignUpCriteria(
@@ -16,8 +16,10 @@ public record FacadeDto() {
             String email,
             String password,
             String profilePath
-    ){
-        public DomainMemberDto.SignUpCommand toCommand(){
+    )
+    {
+        public DomainMemberDto.SignUpCommand toCommand()
+        {
             return new DomainMemberDto.SignUpCommand(
                     nick,
                     email,
@@ -29,7 +31,8 @@ public record FacadeDto() {
 
     public record SignUpResult(
             Long memberId
-    ){
+    )
+    {
         public static SignUpResult fromInfo(DomainMemberDto.SignUpInfo info){
             return new SignUpResult(info.memberId());
 
@@ -127,35 +130,35 @@ public record FacadeDto() {
             String accessToken,
             String refreshToken,
             String nick,
-            List<LoginRoom> privateRoom,
-            List<LoginRoom> multiRoom,
-            List<LoginRelationship> followList,
-            List<LoginRelationship> blockList,
-            List<MemberNickInfo> memberInfoList
+            List<RoomInfo> privateRoom,
+            List<RoomInfo> multiRoom,
+            List<RelationShip> followList,
+            List<RelationShip> blockList,
+            List<MemberInfo> memberInfoList
     )
     {}
 
-    public record LoginRoom(
+    public record RoomInfo(
         Long roomId,
         String roomTitle,
         RoomEnum.RoomType roomType
     )
     {}
 
-    public record LoginRelationship(
+    public record RelationShip(
         Long relationshipId,
         Long memberId,
         RelationshipEnum.RelationType type
     )
     {}
 
-    public record MemberNickInfo(
+    public record MemberInfo(
             Long memberId,
             String nick
     )
     {
-        public static MemberNickInfo fromDomain(DomainMemberDto.MemberNickDto domainDto ){
-            return new MemberNickInfo(
+        public static MemberInfo fromDomain(DomainMemberDto.MemberNickDto domainDto ){
+            return new MemberInfo(
                     domainDto.memberId(),
                     domainDto.nick()
             );

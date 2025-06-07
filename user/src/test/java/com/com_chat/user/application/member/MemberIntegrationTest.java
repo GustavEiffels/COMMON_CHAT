@@ -1,9 +1,7 @@
 package com.com_chat.user.application.member;
 
 
-import com.com_chat.user.domain.chatroom.Room;
 import com.com_chat.user.domain.member.Member;
-import com.com_chat.user.domain.member.MemberException;
 import com.com_chat.user.domain.member.MemberRepository;
 import com.com_chat.user.fixture.MemberFixture;
 import com.com_chat.user.fixture.RelationshipFixture;
@@ -19,7 +17,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
-import org.testcontainers.shaded.org.checkerframework.checker.units.qual.A;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -75,7 +72,7 @@ class MemberIntegrationTest {
         String email = "email@email.com";
         String password = "Qwer!@34!";
         String profilePath = "test/path";
-        FacadeDto.SignUpCriteria criteria = new FacadeDto.SignUpCriteria(
+        FacadeMemberDto.SignUpCriteria criteria = new FacadeMemberDto.SignUpCriteria(
           nick,
           email,
           password,
@@ -83,7 +80,7 @@ class MemberIntegrationTest {
         );
 
         // when
-        FacadeDto.SignUpResult result  = memberFacade.signUp(criteria);
+        FacadeMemberDto.SignUpResult result  = memberFacade.signUp(criteria);
 
         Long resultId = result.memberId();
         Member findMember = memberRepository.find(resultId).get();
@@ -106,7 +103,7 @@ class MemberIntegrationTest {
         String email = "email@email.com";
         String password = "Qwer!@34!";
         String profilePath = "test/path";
-        FacadeDto.SignUpCriteria criteria = new FacadeDto.SignUpCriteria(
+        FacadeMemberDto.SignUpCriteria criteria = new FacadeMemberDto.SignUpCriteria(
                 nick,
                 email,
                 password,
@@ -167,13 +164,13 @@ class MemberIntegrationTest {
         }
 
         // when
-        FacadeDto.LoginCriteria criteria = new FacadeDto.LoginCriteria(
+        FacadeMemberDto.LoginCriteria criteria = new FacadeMemberDto.LoginCriteria(
                 member.email(),
                 "Qwer!234!"
         );
 
         // then
-        FacadeDto.LoginResult result = memberFacade.login(criteria);
+        FacadeMemberDto.LoginResult result = memberFacade.login(criteria);
         System.out.println("result : "+result);
         Assertions.assertEquals(1,result.multiRoom().size(),"테스트 케이스의 멀티 룸 개수는 1개이다.");
         Assertions.assertEquals(9,result.privateRoom().size(),"테스트 케이스의 개인 채팅 룸 개수는 9 개이다.");
