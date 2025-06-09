@@ -1,7 +1,8 @@
 // src/components/RelationList.jsx
 import React from 'react';
 
-function RelationList({ title, relations, memberInfos, relationType }) {
+// onRelationClick prop 추가
+function RelationList({ title, relations, memberInfos, relationType, onRelationClick }) {
   if (!relations || relations.length === 0) {
     return <p className="no-data-message">아직 {title}이 없습니다.</p>;
   }
@@ -15,8 +16,17 @@ function RelationList({ title, relations, memberInfos, relationType }) {
       <ul className="item-list">
         {relations.map((rel) => {
           const relatedNick = memberNickMap.get(rel.memberId) || `알 수 없음 (ID: ${rel.memberId})`;
+          // 'relatedMemberInfo'는 MemberInfo 객체 (memberId, nick)
+          const relatedMemberInfo = memberInfos.find(info => info.memberId === rel.memberId); 
+
           return (
-            <li key={rel.relationshipId}>
+            // ★★★ onClick 이벤트 추가 ★★★
+            // 클릭 시 onRelationClick prop으로 관계, 멤버 정보, 관계 타입을 전달
+            <li 
+              key={rel.relationshipId} 
+              onClick={() => onRelationClick(rel, relatedMemberInfo, relationType)}
+              style={{ cursor: 'pointer' }} // 클릭 가능함을 시각적으로 나타냄
+            >
               <span>{relatedNick}</span>
               <span className={`type ${relationType === 'follow' ? 'follow' : 'block'}`}>
                 {relationType === 'follow' ? '친구' : '차단'}
