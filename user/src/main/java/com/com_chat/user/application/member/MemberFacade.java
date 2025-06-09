@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.stream.Stream;
 
 @Service
 @RequiredArgsConstructor
@@ -66,7 +67,12 @@ public class MemberFacade {
                 .map(block -> new FacadeMemberDto.RelationShip(block.relationshipId(), block.toMemberId(),block.type()))
                 .toList();
 
-        List<Long> memberIds = followList.stream().map(FacadeMemberDto.RelationShip::memberId).toList();
+        List<Long> memberIds = Stream.concat(
+                        followList.stream().map(FacadeMemberDto.RelationShip::memberId),
+                        blockList.stream().map(FacadeMemberDto.RelationShip::memberId)
+                )
+                .distinct()
+                .toList();
 
         List<FacadeMemberDto.MemberInfo> memberInfoList = memberService.findMemberInfo(memberIds).memberDtoList()
                 .stream()
