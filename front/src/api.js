@@ -142,6 +142,69 @@ const api = {
       console.error('API Error during blockMember:', error);
       return { success: false, message: error.message || '네트워크 오류 또는 서버에 연결할 수 없습니다.' };
     }
+  },
+
+  // ★★★ 친구 해제 API 호출 ★★★
+  unfollow: async (relationshipId) => {
+    try {
+      const accessToken = localStorage.getItem('accessToken');
+      if (!accessToken) {
+        throw new Error('로그인 토큰이 없습니다. 다시 로그인해주세요.');
+      }
+
+      const response = await fetch(`${API_BASE_URL}/relationships/unfollow`, {
+        method: 'POST', // 백엔드 @PostMapping에 맞춤
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${accessToken}`
+        },
+        body: JSON.stringify({ relationshipId }), // toMemberId를 요청 본문에 포함
+      });
+
+      const data = await response.json(); // ApiResponse<Void> 형태도 파싱 가능
+
+      if (response.ok && data.status === 200 && !data.error) {
+        return { success: true, message: data.message || '친구 관계 해제 성공!' };
+      } else {
+        const errorMessage = data.error ? data.error.message : (data.message || '친구 관계 해제 실패: 알 수 없는 오류');
+        return { success: false, message: errorMessage };
+      }
+    } catch (error) {
+      console.error('API Error during unfollow:', error);
+      return { success: false, message: error.message || '네트워크 오류 또는 서버에 연결할 수 없습니다.' };
+    }
+  },
+
+  // ★★★ 차단 해제 API 호출 ★★★
+  unblock: async (relationshipId) => {
+    try {
+      const accessToken = localStorage.getItem('accessToken');
+      if (!accessToken) {
+        throw new Error('로그인 토큰이 없습니다. 다시 로그인해주세요.');
+      }
+
+      const response = await fetch(`${API_BASE_URL}/relationships/unblock`, {
+        method: 'POST', // 백엔드 @PostMapping에 맞춤
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${accessToken}`
+        },
+        body: JSON.stringify({ relationshipId }), // toMemberId를 요청 본문에 포함
+      }
+      );
+
+      const data = await response.json();
+
+      if (response.ok && data.status === 200 && !data.error) {
+        return { success: true, message: data.message || '차단 해제 성공!' };
+      } else {
+        const errorMessage = data.error ? data.error.message : (data.message || '차단 해제 실패: 알 수 없는 오류');
+        return { success: false, message: errorMessage };
+      }
+    } catch (error) {
+      console.error('API Error during unblock:', error);
+      return { success: false, message: error.message || '네트워크 오류 또는 서버에 연결할 수 없습니다.' };
+    }
   }
 
 };

@@ -4,6 +4,8 @@ import com.com_chat.user.application.relationship.FacadeRelationshipDto;
 import com.com_chat.user.domain.relationship.RelationshipEnum;
 
 public record ApiDto() {
+
+// CREATE REQUEST
     public record CreateRequest(
             Long toMemberId
     )
@@ -16,7 +18,8 @@ public record ApiDto() {
             RelationShipDto relationShipDto,
             MemberInfoDto memberInfoDto
 
-    ){
+    )
+    {
         public static CreateResponse fromResult(FacadeRelationshipDto.CreateResult result){
             return new CreateResponse(
                     RelationShipDto.fromResult(result.relationShipDto()),
@@ -29,7 +32,8 @@ public record ApiDto() {
             Long relationshipId,
             Long memberId,
             RelationshipEnum.RelationType type
-    ){
+    )
+    {
         public static RelationShipDto fromResult(FacadeRelationshipDto.RelationShipDto relationShipDto){
             return new RelationShipDto(
                     relationShipDto.relationshipId(),
@@ -52,7 +56,7 @@ public record ApiDto() {
         }
     }
 
-    public record UnFollowRequest(
+    public record UpdateRequest(
             Long relationshipId
     )
     {

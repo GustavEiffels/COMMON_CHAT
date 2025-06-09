@@ -46,4 +46,20 @@ public class RelationshipController {
                 )
         );
     }
+
+    @PostMapping("/unblock")
+    public ApiResponse<Void> unblock(
+            @RequestBody ApiDto.UpdateRequest request
+    ){
+        relationshipFacade.update(request.toCriteria(RelationshipEnum.Command.CANCEL, RelationshipEnum.RelationType.NONE));
+        return ApiResponse.ok();
+    }
+
+    @PostMapping("/unfollow")
+    public ApiResponse<Void> unfollow(
+            @RequestBody ApiDto.UpdateRequest request
+    ){
+        relationshipFacade.update(request.toCriteria(RelationshipEnum.Command.CANCEL, RelationshipEnum.RelationType.NONE));
+        return ApiResponse.ok();
+    }
 }

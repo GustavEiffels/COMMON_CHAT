@@ -1,11 +1,13 @@
 // src/HomePage.jsx
-import React, { useEffect, useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { toast } from 'react-toastify'; // toast 함수 임포트
-import ChatRoomList from './components/ChatRoomList'; // 채팅방 목록 컴포넌트 임포트
-import RelationList from './components/RelationList'; // 친구/차단 목록 컴포넌트 임포트
-import api from './api'; // API 서비스 임포트
-import RelationActionModal from './components/RelationActionModal'; // 관계 액션 모달 임포트 (새로 추가됨)
+import React, { useEffect, useState, useRef } from 'react'; // React Hooks 임포트
+import { useNavigate } from 'react-router-dom'; // 페이지 이동을 위한 navigate 훅 사용
+import { toast } from 'react-toastify'; // toast 함수 임포트 (알림 메시지)
+
+// 로컬 컴포넌트 임포트
+import ChatRoomList from './components/ChatRoomList'; // 채팅방 목록 표시
+import RelationList from './components/RelationList'; // 친구/차단 목록 표시
+import api from './api'; // 백엔드 API 서비스
+import RelationActionModal from './components/RelationActionModal'; // 관계 액션 모달 임포트
 
 // 검색 결과 클릭 시 나타나는 모달 (MemberActionModal)
 // 이 컴포넌트는 HomePage.jsx 파일 상단에 그대로 둡니다.
@@ -39,21 +41,21 @@ function HomePage() {
   // 로그인 응답에서 받아온 데이터 상태 (localStorage에서 로드)
   const [privateRooms, setPrivateRooms] = useState([]); // 1:1 채팅방 목록
   const [multiRooms, setMultiRooms] = useState([]); // 단체 채팅방 목록
-  const [followList, setFollowList] = useState([]); // 친구 목록 (관계 정보)
-  const [blockList, setBlockList] = useState([]); // 차단 목록 (관계 정보)
-  const [memberInfoList, setMemberInfoList] = useState([]); // 친구/차단 목록의 닉네임 조회를 위함 (모든 관련 멤버 정보)
+  const [followList, setFollowList] = useState([]); // 친구 목록 (관계 정보: RelationShip DTO)
+  const [blockList, setBlockList] = useState([]); // 차단 목록 (관계 정보: RelationShip DTO)
+  const [memberInfoList, setMemberInfoList] = useState([]); // 친구/차단 목록의 닉네임 조회를 위함 (MemberInfo DTO)
 
   // 검색 기능 관련 상태
   const [searchQuery, setSearchQuery] = useState(''); // 검색 입력값
-  const [searchResults, setSearchResults] = useState([]); // 검색 결과 멤버 리스트
+  const [searchResults, setSearchResults] = useState([]); // 검색 결과 멤버 리스트 (MemberInfo DTO)
   const [searchLoading, setSearchLoading] = useState(false); // 검색 로딩 상태
   const [searchError, setSearchError] = useState(''); // 검색 에러 메시지
 
-  // 검색 결과 클릭 시 나타나는 모달 (MemberActionModal) 관련 상태
+  // MemberActionModal 관련 상태 (검색 결과 클릭 시 사용)
   const [isModalOpen, setIsModalOpen] = useState(false); // 모달 열림/닫힘 상태
-  const [selectedMemberForModal, setSelectedMemberForModal] = useState(null); // 모달에 전달할 선택된 멤버 정보
+  const [selectedMemberForModal, setSelectedMemberForModal] = useState(null); // 모달에 전달할 선택된 멤버 정보 (MemberInfo DTO)
 
-  // 관계 목록 클릭 시 나타나는 모달 (RelationActionModal) 관련 상태
+  // RelationActionModal 관련 상태 (친구/차단 목록 클릭 시 사용)
   const [isRelationModalOpen, setIsRelationModalOpen] = useState(false); // 관계 모달 열림/닫힘 상태
   // 선택된 관계의 원본 RelationShip 객체와 해당 멤버의 MemberInfo 객체, 관계 타입을 저장
   const [selectedRelationForModal, setSelectedRelationForModal] = useState(null); 
@@ -64,18 +66,19 @@ function HomePage() {
   const [indicatorStyle, setIndicatorStyle] = useState({ left: 0, width: 0 }); // 인디케이터의 스타일
 
   // ★★★ 초기 데이터 로딩 및 상태 업데이트 함수 ★★★
+  // 컴포넌트 마운트 시 localStorage에서 사용자 정보 및 관련 리스트를 가져와 상태에 설정
   const loadInitialData = () => {
     const storedNick = localStorage.getItem('memberNick'); // localStorage에서 닉네임 가져오기
     const storedId = localStorage.getItem('memberId'); // localStorage에서 memberId 가져오기
     
-    // localStorage에 저장된 JSON 문자열을 파싱하여 각 리스트 상태에 설정
+    // localStorage에 저장된 JSON 문자열을 파싱하여 각 리스트 상태에 설정 (|| '[]'로 기본값 설정)
     const storedPrivateRooms = JSON.parse(localStorage.getItem('privateRooms') || '[]');
     const storedMultiRooms = JSON.parse(localStorage.getItem('multiRooms') || '[]');
     const storedFollowList = JSON.parse(localStorage.getItem('followList') || '[]');
     const storedBlockList = JSON.parse(localStorage.getItem('blockList') || '[]');
     const storedMemberInfoList = JSON.parse(localStorage.getItem('memberInfoList') || '[]');
 
-    if (storedNick && storedId) { // 닉네임과 ID가 있으면 상태 업데이트
+    if (storedNick && storedId) { // 닉네임과 ID가 유효하면 상태 업데이트
       setMemberNick(storedNick);
       setMemberId(storedId); // String 그대로 저장 (비교 시 String으로 변환 필요)
       setPrivateRooms(storedPrivateRooms);
@@ -84,34 +87,35 @@ function HomePage() {
       setBlockList(storedBlockList);
       setMemberInfoList(storedMemberInfoList);
     } else {
-      navigate('/login'); // 정보 없으면 로그인 페이지로 리디렉션
+      navigate('/login'); // 정보가 없으면 로그인 페이지로 리디렉션
     }
   };
 
+  // 컴포넌트 마운트 시 loadInitialData 함수 실행
   useEffect(() => {
-    loadInitialData(); // 컴포넌트 마운트 시 초기 데이터 로드
+    loadInitialData();
   }, [navigate]); // navigate 함수가 변경될 때만 재실행 (의존성 배열)
 
   // ★★★ activeTab 변경 시 검색 기록 초기화 및 탭 인디케이터 업데이트 ★★★
   useEffect(() => {
-    // 탭 이동 시 검색 기록 초기화
+    // 탭 이동 시 검색 관련 상태 초기화
     setSearchQuery('');
     setSearchResults([]);
     setSearchError('');
     setSearchLoading(false);
 
-    // 탭 인디케이터 위치 업데이트
-    const activeTabButton = tabRefs.current[activeTab];
+    // 탭 인디케이터 위치 및 너비 업데이트
+    const activeTabButton = tabRefs.current[activeTab]; // 현재 활성화된 탭 버튼의 DOM 요소
     if (activeTabButton && indicatorRef.current) {
-      const navRect = indicatorRef.current.parentElement.getBoundingClientRect(); // dashboard-nav의 위치
+      const navRect = indicatorRef.current.parentElement.getBoundingClientRect(); // 부모 (.dashboard-nav)의 위치
       const buttonRect = activeTabButton.getBoundingClientRect(); // 활성화된 버튼의 위치
 
       setIndicatorStyle({
-        left: buttonRect.left - navRect.left, // dashboard-nav 내부에서의 상대적인 left 위치
+        left: buttonRect.left - navRect.left, // 부모 요소 내에서의 상대적인 left 위치
         width: buttonRect.width, // 활성화된 버튼의 너비
       });
     }
-  }, [activeTab]); // activeTab이 변경될 때마다 실행
+  }, [activeTab]); // activeTab 상태가 변경될 때마다 실행
 
   // 컴포넌트 마운트 시 및 리사이즈 시 인디케이터 초기 위치 설정
   useEffect(() => {
@@ -128,7 +132,7 @@ function HomePage() {
     };
 
     window.addEventListener('resize', handleResize); // 윈도우 리사이즈 이벤트 리스너 등록
-    handleResize(); // 초기 렌더링 시에도 위치 설정
+    handleResize(); // 초기 렌더링 시 한 번 호출
 
     return () => {
       window.removeEventListener('resize', handleResize); // 컴포넌트 언마운트 시 이벤트 리스너 제거
@@ -202,7 +206,8 @@ function HomePage() {
   // 검색 결과 모달 닫기 핸들러
   const handleModalClose = () => {
     setIsModalOpen(false); // 모달 닫기
-    setTimeout(() => setSelectedMemberForModal(null), 300); // 애니메이션 후 멤버 정보 초기화
+    // 모달 닫기 애니메이션을 위해 setTimeout을 사용하여 member 정보를 늦게 초기화
+    setTimeout(() => setSelectedMemberForModal(null), 300); // CSS transition 시간과 동일하게
   };
 
   // 친구 추가 버튼 클릭 핸들러 (MemberActionModal 내)
@@ -318,26 +323,54 @@ function HomePage() {
   // ★★★ 관계 모달: 친구 해제하기 버튼 클릭 핸들러 ★★★
   const handleUnfriend = async (relation, member) => {
     // 실제 친구 해제 API 호출 로직 (예: DELETE /relationships/unfollow)
-    toast.info(`${member.nick}님과의 친구 관계를 해제했습니다! (가상)`);
-    console.log('친구 해제 요청:', relation, member);
-    handleRelationModalClose(); // 모달 닫기
-    // 성공 시 followList 상태 업데이트
-    setFollowList(prev => prev.filter(r => r.relationshipId !== relation.relationshipId));
-    localStorage.setItem('followList', JSON.stringify(followList.filter(r => r.relationshipId !== relation.relationshipId)));
+    try {
+      const response = await api.unfollow(relation.relationshipId); // API 호출
+      if (response.success) {
+        toast.success(`${member.nick}님과의 친구 관계를 해제했습니다!`); // 성공 토스트
+        // followList 상태 업데이트
+        setFollowList(prev => {
+          const updatedList = prev.filter(r => r.relationshipId !== relation.relationshipId);
+          localStorage.setItem('followList', JSON.stringify(updatedList)); // localStorage 업데이트
+          return updatedList;
+        });
+        // memberInfoList에서 해당 멤버 정보 제거 여부는 비즈니스 로직에 따라 결정
+        // (예: 친구 관계는 아니지만 여전히 다른 목록(차단)에 있거나, 검색 결과로 다시 나타날 수 있음)
+      } else {
+        toast.error(response.message || `${member.nick}님 친구 관계 해제에 실패했습니다.`); // 에러 토스트
+      }
+    } catch (error) {
+      toast.error(error.message || '친구 관계 해제 중 네트워크 오류가 발생했습니다.'); // 네트워크 에러 토스트
+    } finally {
+      handleRelationModalClose(); // 모달 닫기
+    }
   };
 
   // ★★★ 관계 모달: 차단 해제 버튼 클릭 핸들러 ★★★
   const handleUnblock = async (relation, member) => {
     // 실제 차단 해제 API 호출 로직 (예: DELETE /relationships/unblock)
-    toast.info(`${member.nick}님을 차단 해제했습니다! (가상)`);
-    console.log('차단 해제 요청:', relation, member);
-    handleRelationModalClose(); // 모달 닫기
-    // 성공 시 blockList 상태 업데이트
-    setBlockList(prev => prev.filter(r => r.relationshipId !== relation.relationshipId));
-    localStorage.setItem('blockList', JSON.stringify(blockList.filter(r => r.relationshipId !== relation.relationshipId)));
-    
-    // 만약 친구 목록에 차단 해제된 사람이 다시 친구로 나타나야 한다면,
-    // 해당 로직도 추가해야 합니다. (여기서는 간단히 처리)
+    try {
+      const response = await api.unblock(relation.relationshipId); // API 호출
+      if (response.success) {
+        toast.success(`${member.nick}님을 차단 해제했습니다!`); // 성공 토스트
+        // blockList 상태 업데이트
+        setBlockList(prev => {
+          const updatedList = prev.filter(r => r.relationshipId !== relation.relationshipId);
+          localStorage.setItem('blockList', JSON.stringify(updatedList)); // localStorage 업데이트
+          return updatedList;
+        });
+        
+        // 만약 친구 목록에 차단 해제된 사람이 다시 친구로 나타나야 한다면,
+        // 해당 로직도 추가해야 합니다. (여기서는 간단히 처리)
+        // 예: setFollowList(prev => [...prev, { relationshipId: newId, memberId: member.memberId, type: 'FAVORITE' }]);
+        // localStorage.setItem('followList', JSON.stringify([...followList, { relationshipId: newId, memberId: member.memberId, type: 'FAVORITE' }]));
+      } else {
+        toast.error(response.message || `${member.nick}님 차단 해제에 실패했습니다.`); // 에러 토스트
+      }
+    } catch (error) {
+      toast.error(error.message || '차단 해제 중 네트워크 오류가 발생했습니다.'); // 네트워크 에러 토스트
+    } finally {
+      handleRelationModalClose(); // 모달 닫기
+    }
   };
 
   // 관계 모달: 친구와 채팅하기 버튼 클릭 핸들러
