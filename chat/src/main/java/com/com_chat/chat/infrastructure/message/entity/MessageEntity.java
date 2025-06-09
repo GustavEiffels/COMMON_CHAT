@@ -16,7 +16,6 @@ import java.time.LocalDateTime;
 @Document(collection = "Messages")
 public class MessageEntity {
 
-
     @Id
     private String id;
     private Long msgRoomCnt;

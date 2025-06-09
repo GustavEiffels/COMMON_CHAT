@@ -105,6 +105,16 @@ public class MemberService {
                         .toList());
     }
 
+    public DomainMemberDto.MemberNickDto findMemberInfo(Long memberId){
+        Optional<Member> optionalMember = repository.find(memberId);
+
+        if ( optionalMember.isEmpty() ){
+            throw new BaseException(MemberException.NOT_EXIST);
+        }
+
+        return new DomainMemberDto.MemberNickDto(optionalMember.get().memberId(), optionalMember.get().nick());
+    }
+
 // FIND
     public DomainMemberDto.AuthenticationInfo findAuthenticationMember(){
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();

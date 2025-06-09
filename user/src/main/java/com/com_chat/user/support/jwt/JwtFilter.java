@@ -50,6 +50,7 @@ public class JwtFilter extends OncePerRequestFilter {
         }
 
         String authorizationHeader = request.getHeader("Authorization");
+        System.out.println("authorizationHeader : "+authorizationHeader);
 
         if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
             Long memberId = handler.getMemberId(authorizationHeader);

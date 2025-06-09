@@ -20,7 +20,6 @@ public record Member(
     public Member changeProfilePath(String profilePath){
         return new Member(memberId,nick,email,password,profilePath,refreshToken,lastLoginDate);
     }
-
     public Member refresh(String refreshToken){
         return new Member(memberId,nick,email,password,profilePath,refreshToken,lastLoginDate);
     }

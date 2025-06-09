@@ -24,11 +24,18 @@ public record DomainRelationsDto() {
     }
 
     public record CreateInfo(
-            Long relationshipId
+            Long relationshipId,
+            Long memberId,
+            RelationshipEnum.RelationType type
+
     )
     {
         public static CreateInfo fromDomain(Relationship relationship){
-            return new CreateInfo(relationship.relationshipId());
+            return new CreateInfo(
+                    relationship.relationshipId(),
+                    relationship.toMemberId(),
+                    relationship.type()
+            );
         }
     }
 

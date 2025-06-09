@@ -84,8 +84,66 @@ const api = {
       console.error('API Error during searchMembers:', error);
       return { success: false, message: '네트워크 오류 또는 서버에 연결할 수 없습니다.' };
     }
+  },
+  addFriend: async (toMemberId) => {
+    try {
+      const accessToken = localStorage.getItem('accessToken');
+      if (!accessToken) {
+        throw new Error('로그인 토큰이 없습니다. 다시 로그인해주세요.');
+      }
+
+      const response = await fetch(`${API_BASE_URL}/relationships/follow`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${accessToken}`
+        },
+        body: JSON.stringify({ toMemberId }), // toMemberId를 요청 본문에 포함
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.status === 200 && !data.error) {
+        return { success: true, message: data.message || '친구 추가 성공!', data: data.data };
+      } else {
+        const errorMessage = data.error ? data.error.message : (data.message || '친구 추가 실패: 알 수 없는 오류');
+        return { success: false, message: errorMessage };
+      }
+    } catch (error) {
+      console.error('API Error during addFriend:', error);
+      return { success: false, message: error.message || '네트워크 오류 또는 서버에 연결할 수 없습니다.' };
+    }
+  },
+   blockMember: async (toMemberId) => {
+    try {
+      const accessToken = localStorage.getItem('accessToken');
+      if (!accessToken) {
+        throw new Error('로그인 토큰이 없습니다. 다시 로그인해주세요.');
+      }
+
+      const response = await fetch(`${API_BASE_URL}/relationships/block`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${accessToken}`
+        },
+        body: JSON.stringify({ toMemberId }), // toMemberId를 요청 본문에 포함
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.status === 200 && !data.error) {
+        return { success: true, message: data.message || '회원 차단 성공!', data: data.data };
+      } else {
+        const errorMessage = data.error ? data.error.message : (data.message || '회원 차단 실패: 알 수 없는 오류');
+        return { success: false, message: errorMessage };
+      }
+    } catch (error) {
+      console.error('API Error during blockMember:', error);
+      return { success: false, message: error.message || '네트워크 오류 또는 서버에 연결할 수 없습니다.' };
+    }
   }
-  
+
 };
 
 export default api;

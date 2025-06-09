@@ -6,8 +6,8 @@ import ChatRoomList from './components/ChatRoomList';
 import RelationList from './components/RelationList';
 import api from './api';
 
-// 모달 컴포넌트
-function MemberActionModal({ isOpen, onClose, member, onAddFriend, onBlockMember, onStartPrivateChat }) { // 새로운 prop 추가
+// 모달 컴포넌트는 HomePage.jsx 파일 상단에 그대로 둡니다.
+function MemberActionModal({ isOpen, onClose, member, onAddFriend, onBlockMember, onStartPrivateChat }) {
   if (!member) {
     return null;
   }
@@ -18,7 +18,6 @@ function MemberActionModal({ isOpen, onClose, member, onAddFriend, onBlockMember
         <h3>{member.nick}</h3>
         <p>님에게 어떤 작업을 수행하시겠습니까?</p>
         <div className="modal-actions">
-          {/* ★★★ 새로운 버튼 추가 ★★★ */}
           <button className="modal-button start-chat" onClick={() => onStartPrivateChat(member)}>개인 채팅하기</button>
           <button className="modal-button add-friend" onClick={() => onAddFriend(member)}>친구 추가</button>
           <button className="modal-button block-member" onClick={() => onBlockMember(member)}>차단</button>
@@ -32,7 +31,7 @@ function MemberActionModal({ isOpen, onClose, member, onAddFriend, onBlockMember
 function HomePage() {
   const navigate = useNavigate();
   const [memberNick, setMemberNick] = useState('');
-  const [memberId, setMemberId] = useState('');
+  const [memberId, setMemberId] = useState(''); // 로그인한 자신의 memberId 상태
   const [activeTab, setActiveTab] = useState('private');
 
   const [privateRooms, setPrivateRooms] = useState([]);
@@ -53,7 +52,8 @@ function HomePage() {
   const indicatorRef = useRef(null);
   const [indicatorStyle, setIndicatorStyle] = useState({ left: 0, width: 0 });
 
-  useEffect(() => {
+  // ★★★ 초기 데이터 로딩 및 상태 업데이트 함수 ★★★
+  const loadInitialData = () => {
     const storedNick = localStorage.getItem('memberNick');
     const storedId = localStorage.getItem('memberId');
     
@@ -74,6 +74,10 @@ function HomePage() {
     } else {
       navigate('/login');
     }
+  };
+
+  useEffect(() => {
+    loadInitialData(); // 컴포넌트 마운트 시 초기 데이터 로드
   }, [navigate]);
 
   useEffect(() => {
@@ -117,16 +121,7 @@ function HomePage() {
 
 
   const handleLogout = () => {
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('refreshToken');
-    localStorage.removeItem('memberNick');
-    localStorage.removeItem('memberId');
-    localStorage.removeItem('privateRooms');
-    localStorage.removeItem('multiRooms');
-    localStorage.removeItem('followList');
-    localStorage.removeItem('blockList');
-    localStorage.removeItem('memberInfoList');
-
+    localStorage.clear(); // 모든 localStorage 데이터 삭제
     toast.info('로그아웃 되었습니다.');
     navigate('/login');
   };
@@ -190,33 +185,96 @@ function HomePage() {
     setTimeout(() => setSelectedMemberForModal(null), 300);
   };
 
-  const handleAddFriend = (member) => {
-    // 실제 친구 추가 API 호출 로직
-    toast.success(`${member.nick}님을 친구로 추가했습니다! (가상)`);
-    console.log('친구 추가 요청:', member);
-    handleModalClose();
+  // ★★★ 친구 추가 버튼 클릭 핸들러 (모달 내) ★★★
+  const handleAddFriend = async (member) => {
+    try {
+      const response = await api.addFriend(member.memberId);
+      if (response.success) {
+        toast.success(`${member.nick}님을 친구로 추가했습니다!`);
+        // ★★★ followList 및 memberInfoList 업데이트 ★★★
+        const newRelation = response.data.relationShipDto; // RelationShipDto
+        const newMemberInfo = response.data.memberInfoDto; // MemberInfoDto
+
+        // followList에 새 관계 추가 (중복 방지)
+        setFollowList(prev => {
+          if (prev.some(rel => rel.memberId === newRelation.memberId)) {
+            return prev; // 이미 있다면 추가 안함
+          }
+          return [...prev, newRelation];
+        });
+        
+        // memberInfoList에 새 멤버 정보 추가 (중복 방지)
+        setMemberInfoList(prev => {
+          if (prev.some(info => info.memberId === newMemberInfo.memberId)) {
+            return prev; // 이미 있다면 추가 안함
+          }
+          return [...prev, newMemberInfo];
+        });
+
+        // localStorage도 업데이트 (새로고침 시 데이터 유지)
+        localStorage.setItem('followList', JSON.stringify([...followList, newRelation]));
+        localStorage.setItem('memberInfoList', JSON.stringify([...memberInfoList, newMemberInfo]));
+
+      } else {
+        toast.error(response.message || `${member.nick}님 친구 추가에 실패했습니다.`);
+      }
+    } catch (error) {
+      toast.error(error.message || '친구 추가 중 네트워크 오류가 발생했습니다.');
+    } finally {
+      handleModalClose(); // 모달 닫기
+    }
   };
 
-  const handleBlockMember = (member) => {
-    // 실제 차단 API 호출 로직
-    toast.warn(`${member.nick}님을 차단했습니다! (가상)`);
-    console.log('차단 요청:', member);
-    handleModalClose();
+  // ★★★ 차단 버튼 클릭 핸들러 (모달 내) ★★★
+  const handleBlockMember = async (member) => {
+    try {
+      const response = await api.blockMember(member.memberId);
+      if (response.success) {
+        toast.success(`${member.nick}님을 차단했습니다!`);
+        // ★★★ blockList 및 memberInfoList 업데이트 ★★★
+        const newRelation = response.data.relationShipDto; // RelationShipDto
+        const newMemberInfo = response.data.memberInfoDto; // MemberInfoDto
+
+        // blockList에 새 관계 추가 (중복 방지)
+        setBlockList(prev => {
+          if (prev.some(rel => rel.memberId === newRelation.memberId)) {
+            return prev;
+          }
+          return [...prev, newRelation];
+        });
+        
+        // memberInfoList에 새 멤버 정보 추가 (중복 방지)
+        setMemberInfoList(prev => {
+          if (prev.some(info => info.memberId === newMemberInfo.memberId)) {
+            return prev;
+          }
+          return [...prev, newMemberInfo];
+        });
+
+        // localStorage도 업데이트 (새로고침 시 데이터 유지)
+        localStorage.setItem('blockList', JSON.stringify([...blockList, newRelation]));
+        localStorage.setItem('memberInfoList', JSON.stringify([...memberInfoList, newMemberInfo]));
+
+        // 만약 친구였다면 followList에서 제거하는 로직도 필요 (선택 사항)
+        setFollowList(prev => prev.filter(rel => rel.memberId !== newRelation.memberId));
+        localStorage.setItem('followList', JSON.stringify(followList.filter(rel => rel.memberId !== newRelation.memberId)));
+
+      } else {
+        toast.error(response.message || `${member.nick}님 차단에 실패했습니다.`);
+      }
+    } catch (error) {
+      toast.error(error.message || '회원 차단 중 네트워크 오류가 발생했습니다.');
+    } finally {
+      handleModalClose(); // 모달 닫기
+    }
   };
 
-  // ★★★ 개인 채팅하기 버튼 클릭 핸들러 (모달 내) ★★★
+  // 개인 채팅하기 버튼 클릭 핸들러 (모달 내)
   const handleStartPrivateChat = (member) => {
-    // 실제 1:1 채팅방 생성/이동 로직
-    // - 기존 채팅방이 있는지 확인하는 API 호출 (백엔드에서)
-    // - 없으면 새로운 채팅방 생성 API 호출
-    // - 생성 또는 찾은 채팅방의 roomId를 받아서 해당 채팅방 URL로 이동
-    
     toast.info(`${member.nick}님과 개인 채팅을 시작합니다! (가상)`);
     console.log('개인 채팅 시작 요청:', member);
-    handleModalClose(); // 모달 닫기
-    // 예시: navigate(`/chat-room/${member.memberId}`); // memberId를 기반으로 채팅방 URL 이동
-    // 실제 RoomId를 사용하려면 백엔드 API 호출이 선행되어야 함
-    navigate(`/chat-room/${member.nick}`); // 예시: 닉네임을 URL에 포함하여 이동
+    handleModalClose();
+    navigate(`/chat-room/${member.nick}`); // 예시 URL 이동
   };
 
 
@@ -323,7 +381,7 @@ function HomePage() {
         member={selectedMemberForModal}
         onAddFriend={handleAddFriend}
         onBlockMember={handleBlockMember}
-        onStartPrivateChat={handleStartPrivateChat} // ★★★ 새로운 prop 전달 ★★★
+        onStartPrivateChat={handleStartPrivateChat}
       />
     </div>
   );
