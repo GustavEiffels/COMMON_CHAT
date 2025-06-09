@@ -24,13 +24,14 @@ public class MemberService {
     private final JwtHandler jwtHandler;
 
 
-
-
 // SIGNUP
     public DomainMemberDto.SignUpInfo create(DomainMemberDto.SignUpCommand command){
 
         if( repository.findByNick(command.nick()).isPresent() ){
             throw new BaseException(MemberException.ALREADY_EXIST_NICK);
+        }
+        if( repository.findByEmail(command.email()).isPresent() ){
+            throw new BaseException(MemberException.ALREADY_EMAIL_NICK);
         }
         return DomainMemberDto.SignUpInfo.fromDomain(
                 repository.save(

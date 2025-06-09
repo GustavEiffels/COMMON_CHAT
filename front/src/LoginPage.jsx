@@ -1,13 +1,14 @@
-// src/LoginPage.jsx
+// src/LoginPage.jsx (일부 수정)
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import api from './api';
+import { toast } from 'react-toastify';
 
 function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState('');
-  const [messageType, setMessageType] = useState(''); // 'success' or 'error'
+  const [messageType, setMessageType] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
@@ -27,26 +28,28 @@ function LoginPage() {
     try {
       const response = await api.login(email, password);
       
-      // status 200 이고, error 필드가 없는 경우를 성공으로 간주
-      if (response.status === 200 && response.success) { // api.js에서 이미 success 필드를 만들었으므로 활용
-        setMessage(response.message || '로그인 성공!'); // api.js에서 기본 메시지 설정했으므로 활용
-        setMessageType('success');
+      if (response.status === 200 && response.success) {
+        toast.success(response.message || '로그인 성공!');
         
-        // 로그인 성공 후 받은 데이터 (예: 토큰, 사용자 정보)를 localStorage 등에 저장
-        // console.log('로그인 데이터:', response.data);
+        // ★★★ 여기를 수정합니다: 모든 LoginResponse 데이터 저장 ★★★
         localStorage.setItem('accessToken', response.data.accessToken);
         localStorage.setItem('refreshToken', response.data.refreshToken);
-        localStorage.setItem('memberNick', response.data.nick); // 닉네임 저장
-        localStorage.setItem('memberId', response.data.memberId); // 멤버 ID 저장
+        localStorage.setItem('memberNick', response.data.nick);
+        localStorage.setItem('memberId', response.data.memberId);
+        // JSON.stringify를 사용하여 객체/배열을 문자열로 저장
+        localStorage.setItem('privateRooms', JSON.stringify(response.data.privateRoom || []));
+        localStorage.setItem('multiRooms', JSON.stringify(response.data.multiRoom || []));
+        localStorage.setItem('followList', JSON.stringify(response.data.followList || []));
+        localStorage.setItem('blockList', JSON.stringify(response.data.blockList || []));
+        localStorage.setItem('memberInfoList', JSON.stringify(response.data.memberInfoList || []));
 
-        setTimeout(() => navigate('/home'), 500); // 로그인 성공 후 홈 페이지로 이동
+
+        setTimeout(() => navigate('/home'), 500);
       } else {
-        // 백엔드에서 온 에러 메시지 또는 기본 에러 메시지 표시
         setMessage(response.message || '로그인 실패: 알 수 없는 오류가 발생했습니다.');
         setMessageType('error');
       }
     } catch (error) {
-      // 네트워크 오류 등 예외 발생 시
       setMessage(error.message || '네트워크 오류가 발생했습니다.');
       setMessageType('error');
     } finally {

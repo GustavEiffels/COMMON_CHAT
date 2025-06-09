@@ -1,113 +1,133 @@
 /* src/index.css */
+
+/* 기본 HTML 요소 스타일 */
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+  font-family: 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #f0f2f5;
+  background-color: #eef2f5; /* 더 밝고 부드러운 배경색 */
   display: flex;
   justify-content: center;
   align-items: center;
   min-height: 100vh;
+  color: #34495e; /* 기본 텍스트 색상 (진한 회색) */
+  line-height: 1.6;
 }
 
 code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
 }
 
+/* Auth Container (로그인/회원가입 페이지) */
 .auth-container {
-  background-color: #fff;
-  padding: 30px;
-  border-radius: 8px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-  width: 100%;
-  max-width: 400px;
+  background-color: #ffffff;
+  padding: 40px;
+  border-radius: 16px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+  width: 140%;
+  max-width: 800px; /* ★★★ 450px -> 500px로 증가 ★★★ */
   text-align: center;
+  box-sizing: border-box;
+  animation: fadeIn 0.8s ease-out;
 }
+
 
 .auth-container h2 {
-  margin-bottom: 25px;
-  color: #333;
+  margin-bottom: 35px;
+  color: #34495e;
+  font-size: 2em;
+  font-weight: 700;
+  letter-spacing: -0.5px;
 }
 
 .form-group {
-  margin-bottom: 20px;
+  margin-bottom: 25px;
   text-align: left;
 }
 
 .form-group label {
   display: block;
-  margin-bottom: 8px;
-  font-weight: bold;
+  margin-bottom: 10px;
+  font-weight: 600;
   color: #555;
+  font-size: 0.95em;
 }
 
 .form-group input {
-  width: calc(100% - 24px); /* Padding 고려 */
-  padding: 12px;
-  border: 1px solid #ddd;
-  border-radius: 5px;
-  font-size: 1em;
+  width: calc(100% - 28px);
+  padding: 14px;
+  border: 1px solid #dfe6eb;
+  border-radius: 10px;
+  font-size: 1.05em;
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
 }
 
 .form-group input:focus {
-  border-color: #007bff;
+  border-color: #7f8c8d;
   outline: none;
-  box-shadow: 0 0 5px rgba(0, 123, 255, 0.2);
+  box-shadow: 0 0 0 3px rgba(127, 140, 141, 0.2);
 }
 
 button {
   width: 100%;
-  padding: 12px;
-  background-color: #007bff;
+  padding: 16px;
+  background-color: #2ecc71; /* 에메랄드 그린 */
   color: white;
   border: none;
-  border-radius: 5px;
-  font-size: 1.1em;
+  border-radius: 10px;
+  font-size: 1.2em;
+  font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.3s ease;
+  transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 4px 12px rgba(46, 204, 113, 0.25); /* 버튼 그림자 더 부드럽게 */
 }
 
-button:hover {
-  background-color: #0056b3;
+button:hover:not(:disabled) {
+  background-color: #27ae60;
+  transform: translateY(-4px);
+  box-shadow: 0 6px 18px rgba(46, 204, 113, 0.35);
 }
 
 button:disabled {
   background-color: #cccccc;
   cursor: not-allowed;
+  box-shadow: none;
+  transform: translateY(0);
 }
 
 .message {
-  margin-top: 15px;
-  padding: 10px;
-  border-radius: 5px;
-  font-size: 0.95em;
+  margin-top: 20px;
+  padding: 15px;
+  border-radius: 10px;
+  font-size: 1em;
+  font-weight: 500;
 }
 
 .message.success {
-  background-color: #d4edda;
-  color: #155724;
-  border: 1px solid #c3e6cb;
+  background-color: #e8f8ec;
+  color: #27ae60;
+  border: 1px solid #d4edda;
 }
 
 .message.error {
-  background-color: #f8d7da;
-  color: #721c24;
-  border: 1px solid #f5c6cb;
+  background-color: #fcebeb;
+  color: #c0392b;
+  border: 1px solid #f8d7da;
 }
 
 .nav-link {
-  margin-top: 20px;
-  font-size: 0.9em;
-  color: #007bff;
+  margin-top: 30px;
+  font-size: 1em;
+  color: #3498db;
   text-decoration: none;
   display: block;
+  font-weight: 500;
+  transition: color 0.2s ease;
 }
 
 .nav-link:hover {
+  color: #2980b9;
   text-decoration: underline;
 }
 
@@ -120,6 +140,634 @@ button:disabled {
 }
 .home-page button {
   width: auto;
-  padding: 10px 20px;
+  padding: 12px 25px;
   margin-top: 30px;
+}
+
+/* Chat Dashboard */
+.chat-dashboard {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 1000px;
+  min-height: 85vh;
+  background-color: #ffffff;
+  border-radius: 20px;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  animation: fadeIn 0.8s ease-out;
+}
+
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 25px 40px;
+  border-bottom: 1px solid #ecf0f1;
+  background: linear-gradient(to right, #3498db, #2980b9); /* 밝은 파랑 그라데이션 */
+  color: white;
+  border-top-left-radius: 20px;
+  border-top-right-radius: 20px;
+}
+
+.dashboard-header h2 {
+  margin: 0;
+  font-size: 1.8em;
+  font-weight: 600;
+}
+
+.dashboard-header button {
+  padding: 10px 20px;
+  font-size: 1em;
+  background-color: #e74c3c;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.dashboard-header button:hover {
+  background-color: #c0392b;
+  transform: translateY(-2px);
+}
+
+.dashboard-nav {
+  display: flex;
+  border-bottom: 1px solid #ecf0f1; /* 탭 하단 보더 더 부드럽게 */
+  background-color: #fcfcfc;
+  position: relative; /* 애니메이션을 위해 relative 설정 */
+}
+
+.dashboard-nav button {
+  flex: 1; /* ★★★ 탭 버튼 크기 균등 분배 ★★★ */
+  min-width: 0; /* flex item의 기본 min-width를 재설정하여 flex:1이 제대로 작동하도록 */
+  padding: 20px 0;
+  background-color: #fcfcfc;
+  border: none;
+  font-size: 1.1em;
+  font-weight: 500;
+  color: #7f8c8d;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: none; /* 탭 버튼 그림자 제거 */
+  border-radius: 0; /* 탭 버튼 자체의 모서리 둥글게 제거 (깔끔하게) */
+}
+
+.dashboard-nav button:hover:not(.active) {
+  background-color: #f1f1f1; /* 호버 시 배경색 변경 */
+}
+
+.dashboard-nav button.active {
+  color: #3498db;
+  font-weight: 700;
+  background-color: #ffffff;
+  box-shadow: none; /* 활성 탭 버튼에 그림자가 있었다면 제거 */
+}
+
+/* 탭 인디케이터 (움직이는 밑줄) */
+.dashboard-nav .tab-indicator {
+  position: absolute;
+  bottom: 0;
+  height: 3px;
+  background-color: #3498db;
+  transition: left 0.3s ease-out, width 0.3s ease-out; /* ★★★ 부드러운 이동 애니메이션 ★★★ */
+  border-radius: 2px;
+  z-index: 1; /* 탭 버튼 위로 올릴 경우 (선택적) */
+}
+
+.dashboard-content {
+  flex-grow: 1;
+  padding: 30px 40px;
+  overflow-y: auto;
+  background-color: #ffffff;
+}
+
+.list-section h3 {
+  margin-top: 0;
+  margin-bottom: 25px;
+  color: #34495e;
+  font-size: 1.5em;
+  font-weight: 600;
+  text-align: left;
+}
+
+.item-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+/* 리스트 항목의 전반적인 스타일 */
+.item-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 20px;
+  margin-bottom: 10px;
+  background-color: #ffffff;
+  border: 1px solid #ecf0f1;
+  border-radius: 10px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease-out; /* 애니메이션 시간 증가 */
+}
+
+.item-list li:hover {
+  background-color: #f8f8f8;
+  transform: translateY(-5px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+}
+
+.item-list li:active {
+  background-color: #ecf0f1;
+  transform: translateY(0);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+}
+
+/* 기본 텍스트 색상 (일반 리스트 항목) */
+.item-list li span {
+  font-size: 1em;
+  color: #34495e;
+}
+
+/* 닉네임 전용 스타일 (검색 결과 리스트용) */
+.search-results .item-list li {
+  justify-content: flex-start;
+  padding: 15px 20px;
+  cursor: pointer;
+}
+
+.search-results .item-list li span {
+  font-weight: 600;
+  color: #3498db;
+  transition: color 0.4s ease; /* 닉네임 호버 애니메이션 */
+}
+
+.search-results .item-list li:hover span {
+  color: #2980b9;
+}
+
+
+.item-list li span.type {
+  font-size: 0.85em;
+  color: #666;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.item-list li span.type.private {
+  background-color: #eaf2f8;
+  color: #3498db;
+}
+.item-list li span.type.multi {
+  background-color: #e6f9ed;
+  color: #2ecc71;
+}
+.item-list li span.type.follow {
+  background-color: #fff8e1;
+  color: #f39c12;
+}
+.item-list li span.type.block {
+  background-color: #fde8e7;
+  color: #e74c3c;
+}
+
+.no-data-message {
+    text-align: center;
+    color: #95a5a6;
+    padding: 30px;
+    font-style: italic;
+    background-color: #fcfcfc;
+    border-radius: 12px;
+    margin-top: 25px;
+    box-shadow: inset 0 1px 5px rgba(0,0,0,0.03);
+}
+
+/* Search Section */
+.search-section {
+  margin-bottom: 35px;
+  padding: 25px;
+  background-color: #fcfcfc;
+  border-radius: 16px;
+  border: 1px solid #ecf0f1;
+  box-shadow: inset 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.search-section h3 {
+  margin-top: 0;
+  color: #34495e;
+  font-size: 1.4em;
+  margin-bottom: 25px;
+}
+
+.search-input-group {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+}
+
+.search-input-group input {
+  flex-grow: 1;
+  padding: 14px;
+  border: 1px solid #bdc3c7;
+  border-radius: 10px;
+  font-size: 1.05em;
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.search-input-group input:focus {
+  border-color: #9b59b6;
+  box-shadow: 0 0 0 3px rgba(155, 89, 182, 0.2);
+}
+
+.search-input-group button {
+  padding: 14px 25px;
+  background-color: #9b59b6;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 1.1em;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+  box-shadow: 0 4px 10px rgba(155, 89, 182, 0.25);
+}
+
+.search-input-group button:hover:not(:disabled) {
+  background-color: #8e44ad;
+  transform: translateY(-3px);
+  box-shadow: 0 6px 15px rgba(155, 89, 182, 0.35);
+}
+
+.search-results {
+  margin-top: 30px;
+  border-top: 1px dashed #e0e0e0;
+  padding-top: 25px;
+}
+
+.search-results h4 {
+  margin-top: 0;
+  margin-bottom: 20px;
+  color: #34495e;
+  font-size: 1.25em;
+}
+
+.search-results .item-list {
+  background-color: #ffffff;
+  border: 1px solid #f5f5f5;
+  border-radius: 12px;
+  padding: 10px;
+  box-shadow: inset 0 2px 6px rgba(0,0,0,0.03);
+}
+
+/* Toastify custom theme */
+.Toastify__toast--success {
+    background-color: #e6f7e9 !important;
+    color: #27ae60 !important;
+    border: 1px solid #d4edda !important;
+}
+
+.Toastify__toast--error {
+    background-color: #fde8e7 !important;
+    color: #e74c3c !important;
+    border: 1px solid #f8d7da !important;
+}
+
+.Toastify__toast--info {
+    background-color: #e8f2fa !important;
+    color: #3498db !important;
+    border: 1px solid #bbdefb !important;
+}
+
+.Toastify__toast-body {
+    font-size: 1em !important;
+    font-weight: 500 !important;
+}
+
+
+/* --- Modal Styles --- */
+
+/* 모달 오버레이 (배경) */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  opacity: 0;
+  transition: opacity 0.4s ease-out;
+  pointer-events: none;
+}
+
+/* 모달이 열렸을 때 오버레이 */
+.modal-overlay.open {
+  opacity: 1;
+  pointer-events: all;
+}
+
+/* 모달 콘텐츠 (실제 모달 내용) */
+.modal-content {
+  background-color: #ffffff;
+  padding: 35px;
+  border-radius: 16px;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.25);
+  width: 90%;
+  max-width: 400px; /* 모달 최대 너비 약간 줄임 */
+  text-align: center;
+  transform: scale(0.8);
+  opacity: 0;
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.4s ease-out;
+}
+
+/* 모달이 열렸을 때 콘텐츠 */
+.modal-overlay.open .modal-content {
+  transform: scale(1);
+  opacity: 1;
+}
+
+.modal-content h3 {
+  color: #34495e;
+  font-size: 1.8em;
+  margin-bottom: 15px;
+  font-weight: 600;
+}
+
+/* ★★★ 닉네임만 보이도록 p 태그 수정 (기존 p 태그 스타일 재정의) ★★★ */
+.modal-content p {
+  color: #2c3e50;
+  font-size: 1.5em;
+  font-weight: 700;
+  margin-bottom: 25px;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.05);
+}
+
+
+.modal-actions {
+  display: flex;
+  justify-content: center;
+  gap: 15px; /* 버튼 간 간격 */
+  margin-top: 20px;
+}
+
+/* 모달 버튼 스타일 */
+.modal-button {
+  padding: 12px 22px; /* 패딩 약간 증가 */
+  border: none;
+  border-radius: 8px;
+  font-size: 0.95em; /* 폰트 크기 약간 줄임 */
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+}
+
+.modal-button.add-friend {
+  background-color: #2ecc71; /* 에메랄드 그린 */
+  color: white;
+}
+.modal-button.add-friend:hover {
+  background-color: #27ae60;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 12px rgba(0, 0, 0, 0.2);
+}
+
+.modal-button.block-member {
+  background-color: #e74c3c; /* 빨간색 */
+  color: white;
+}
+.modal-button.block-member:hover {
+  background-color: #c0392b;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 12px rgba(0, 0, 0, 0.2);
+}
+
+.modal-button.cancel {
+  background-color: #95a5a6; /* 회색 */
+  color: white;
+}
+.modal-button.cancel:hover {
+  background-color: #7f8c8d;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* fadeIn 애니메이션 (페이지 로드 시 사용) */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+/* src/index.css */
+
+/* ... (기존 상단 스타일 유지) ... */
+
+/* Toastify custom theme */
+.Toastify__toast--success {
+    background-color: #e6f7e9 !important;
+    color: #27ae60 !important;
+    border: 1px solid #d4edda !important;
+}
+
+.Toastify__toast--error {
+    background-color: #fde8e7 !important;
+    color: #e74c3c !important;
+    border: 1px solid #f8d7da !important;
+}
+
+.Toastify__toast--info {
+    background-color: #e8f2fa !important;
+    color: #3498db !important;
+    border: 1px solid #bbdefb !important;
+}
+
+.Toastify__toast-body {
+    font-size: 1em !important;
+    font-weight: 500 !important;
+}
+
+
+/* --- Modal Styles --- */
+
+/* 모달 오버레이 (배경) */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  opacity: 0;
+  transition: opacity 0.4s ease-out;
+  pointer-events: none;
+}
+
+/* 모달이 열렸을 때 오버레이 */
+.modal-overlay.open {
+  opacity: 1;
+  pointer-events: all;
+}
+
+/* 모달 콘텐츠 (실제 모달 내용) */
+.modal-content {
+  background-color: #ffffff;
+  padding: 35px;
+  border-radius: 16px;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.25);
+  width: 90%;
+  max-width: 550px; /* 모달 최대 너비 증가 */
+  text-align: center;
+  transform: scale(0.8);
+  opacity: 0;
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.4s ease-out;
+}
+
+/* 모달이 열렸을 때 콘텐츠 */
+.modal-overlay.open .modal-content {
+  transform: scale(1);
+  opacity: 1;
+}
+
+.modal-content h3 {
+  color: #34495e;
+  font-size: 1.8em;
+  margin-bottom: 15px;
+  font-weight: 600;
+  white-space: nowrap; /* 텍스트 한 줄로 유지 */
+  overflow: hidden; /* 넘치는 텍스트 숨김 */
+  text-overflow: ellipsis; /* 넘치는 텍스트 줄임표 */
+}
+
+.modal-content p {
+  color: #2c3e50;
+  font-size: 1.5em;
+  font-weight: 700;
+  margin-bottom: 25px;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.05);
+  white-space: nowrap; /* 텍스트 한 줄로 유지 */
+  overflow: hidden; /* 넘치는 텍스트 숨김 */
+  text-overflow: ellipsis; /* 넘치는 텍스트 줄임표 */
+}
+
+
+.modal-actions {
+  display: flex;
+  flex-wrap: wrap; /* 버튼이 넘치면 다음 줄로 이동 */
+  justify-content: space-evenly; /* ★★★ 버튼들을 양쪽으로 균등하게 분배 ★★★ */
+  /* justify-content: center; */ /* 만약 버튼 수가 적을 때 중앙에 모으고 싶다면 이 속성을 사용 */
+  gap: 10px; /* ★★★ 버튼 간 간격 조정 ★★★ */
+  margin-top: 20px;
+}
+
+/* 모달 버튼 스타일 */
+.modal-button {
+  /* ★★★ flex-basis를 사용하여 고정 너비를 주고, flex-shrink로 필요할 때 줄어들게 함 ★★★ */
+  flex: 0 0 auto; /* grow: 0, shrink: 0, basis: auto -> 내용물 크기만큼 */
+  width: 110px; /* ★★★ 버튼의 고정 너비 (예시, 필요에 따라 조정) ★★★ */
+  min-width: 0; /* flex-shrink가 작동하도록 */
+  padding: 12px 10px; /* 내부 패딩 조정 */
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9em; /* 폰트 크기 조정 */
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+  text-align: center;
+  white-space: nowrap; /* 텍스트 한 줄로 유지 */
+  overflow: hidden; /* 넘치는 텍스트 숨김 */
+  text-overflow: ellipsis; /* 넘치는 텍스트 줄임표 */
+}
+
+/* 개별 버튼 색상 */
+.modal-button.start-chat {
+  background-color: #3498db;
+  color: white;
+}
+.modal-button.start-chat:hover {
+  background-color: #2980b9;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 12px rgba(0, 0, 0, 0.2);
+}
+
+.modal-button.add-friend {
+  background-color: #2ecc71;
+  color: white;
+}
+.modal-button.add-friend:hover {
+  background-color: #27ae60;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 12px rgba(0, 0, 0, 0.2);
+}
+
+.modal-button.block-member {
+  background-color: #e74c3c;
+  color: white;
+}
+.modal-button.block-member:hover {
+  background-color: #c0392b;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 12px rgba(0, 0, 0, 0.2);
+}
+
+.modal-button.cancel {
+  background-color: #95a5a6;
+  color: white;
+}
+.modal-button.cancel:hover {
+  background-color: #7f8c8d;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* fadeIn 애니메이션 (페이지 로드 시 사용) */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Toastify custom theme */
+.Toastify__toast--success {
+    background-color: #e6f7e9 !important;
+    color: #27ae60 !important;
+    border: 1px solid #d4edda !important;
+}
+
+.Toastify__toast--error {
+    background-color: #fde8e7 !important;
+    color: #e74c3c !important;
+    border: 1px solid #f8d7da !important;
+}
+
+.Toastify__toast--info {
+    background-color: #e8f2fa !important;
+    color: #3498db !important;
+    border: 1px solid #bbdefb !important;
+}
+
+.Toastify__toast-body {
+    font-size: 1em !important;
+    font-weight: 500 !important;
+}
+
+
+/* --- 탭 이동 애니메이션 관련 CSS (HomePage.jsx에서 JS로 제어) --- */
+.dashboard-nav .tab-indicator {
+  position: absolute;
+  bottom: 0;
+  height: 3px;
+  background-color: #3498db;
+  transition: left 0.3s ease-out, width 0.3s ease-out;
+  border-radius: 2px;
+  z-index: 1;
 }

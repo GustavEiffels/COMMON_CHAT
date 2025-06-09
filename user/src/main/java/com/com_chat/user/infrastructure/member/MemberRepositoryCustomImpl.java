@@ -37,6 +37,7 @@ public class MemberRepositoryCustomImpl implements MemberRepositoryCustom{
                 .map(MemberEntity::toDomain)
                 .toList();
 
+
         Long total = queryFactory.select(memberEntity.memberId.count())
                 .from(memberEntity)
                 .where(type.equals(MemberEnum.QueryType.EMAIL) ? likeEmail(query) : likeNick(query))

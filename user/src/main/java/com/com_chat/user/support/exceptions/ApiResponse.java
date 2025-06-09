@@ -30,6 +30,10 @@ public record ApiResponse<T>(
         return new ApiResponse<>(HttpStatus.INTERNAL_SERVER_ERROR.value(), null, Error.create(baseException));
     }
 
+    public static <T> ApiResponse<T> fail(HttpStatus httpStatus, String errorCode, String message) {
+        return new ApiResponse<>(httpStatus.value(), null, new Error(errorCode, message));
+    }
+
     private record Error(
             String errorCode,
             String message

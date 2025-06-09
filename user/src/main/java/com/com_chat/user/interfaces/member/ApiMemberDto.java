@@ -42,7 +42,6 @@ public record ApiMemberDto() {
     }
 
     // FIND
-
     public record SearchRequest(
             MemberEnum.QueryType type,
             String query,
