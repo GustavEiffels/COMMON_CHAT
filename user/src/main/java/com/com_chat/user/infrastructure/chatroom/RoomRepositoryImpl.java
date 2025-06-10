@@ -33,7 +33,7 @@ public class RoomRepositoryImpl implements RoomRepository {
 
     @Override
     public Optional<Participant> findParticipant(Long loginMemberId, Long chatRoomId) {
-        return Optional.empty();
+        return participantJpaRepository.findParticipant(loginMemberId,chatRoomId);
     }
 
     @Override
@@ -59,6 +59,5 @@ public class RoomRepositoryImpl implements RoomRepository {
         return participantJpaRepository.saveAll(
                 participants.stream().map(ParticipantEntity::fromDomain).toList()
         ).stream().map(ParticipantEntity::toDomain).toList();
-
     }
 }

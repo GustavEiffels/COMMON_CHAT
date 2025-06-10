@@ -205,8 +205,41 @@ const api = {
       console.error('API Error during unblock:', error);
       return { success: false, message: error.message || '네트워크 오류 또는 서버에 연결할 수 없습니다.' };
     }
-  }
+  },
 
+  createChatRoom: async (memberIds, type) => {
+    try {
+      const accessToken = localStorage.getItem('accessToken');
+      if (!accessToken) {
+        throw new Error('로그인 토큰이 없습니다. 다시 로그인해주세요.');
+      }
+
+      console.log('memberIds : ',memberIds)
+
+      const response = await fetch(`${API_BASE_URL}/rooms`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${accessToken}`
+        },
+        body: JSON.stringify({ memberIds, type }),
+      });
+
+      const data = await response.json(); 
+
+
+      if (response.ok && data.status === 200 && !data.error) {
+        // ★★★ data.data에 roomId, roomTitle, roomType이 모두 포함되도록 반환 ★★★
+        return { success: true, message: data.message || '채팅방 생성 성공!', data: data.data };
+      } else {
+        const errorMessage = data.error ? data.error.message : (data.message || '채팅방 생성 실패: 알 수 없는 오류');
+        return { success: false, message: errorMessage };
+      }
+    } catch (error) {
+      console.error('API Error during createChatRoom:', error);
+      return { success: false, message: error.message || '네트워크 오류 또는 서버에 연결할 수 없습니다.' };
+    }
+  }
 };
 
 export default api;

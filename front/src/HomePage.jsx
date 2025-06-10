@@ -1,72 +1,45 @@
-// src/HomePage.jsx
-import React, { useEffect, useState, useRef } from 'react'; // React Hooks 임포트
-import { useNavigate } from 'react-router-dom'; // 페이지 이동을 위한 navigate 훅 사용
-import { toast } from 'react-toastify'; // toast 함수 임포트 (알림 메시지)
+import React, { useEffect, useState, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
 
-// 로컬 컴포넌트 임포트
-import ChatRoomList from './components/ChatRoomList'; // 채팅방 목록 표시
-import RelationList from './components/RelationList'; // 친구/차단 목록 표시
-import api from './api'; // 백엔드 API 서비스
-import RelationActionModal from './components/RelationActionModal'; // 관계 액션 모달 임포트
 
-// 검색 결과 클릭 시 나타나는 모달 (MemberActionModal)
-// 이 컴포넌트는 HomePage.jsx 파일 상단에 그대로 둡니다.
-function MemberActionModal({ isOpen, onClose, member, onAddFriend, onBlockMember, onStartPrivateChat }) {
-  if (!member) {
-    return null; // member 정보가 없으면 렌더링하지 않음
-  }
-  const modalOverlayClass = `modal-overlay ${isOpen ? 'open' : ''}`; // isOpen 상태에 따라 'open' 클래스 추가
-  return (
-    <div className={modalOverlayClass} onClick={onClose}> {/* 오버레이 클릭 시 모달 닫기 */}
-      <div className="modal-content" onClick={(e) => e.stopPropagation()}> {/* 모달 콘텐츠 클릭 시 이벤트 버블링 방지 */}
-        <h3>{member.nick}</h3> {/* 멤버 닉네임 표시 */}
-        <p>님에게 어떤 작업을 수행하시겠습니까?</p>
-        <div className="modal-actions"> {/* 버튼 액션 그룹 */}
-          <button className="modal-button start-chat" onClick={() => onStartPrivateChat(member)}>개인 채팅하기</button>
-          <button className="modal-button add-friend" onClick={() => onAddFriend(member)}>친구 추가</button>
-          <button className="modal-button block-member" onClick={() => onBlockMember(member)}>차단</button>
-          <button className="modal-button cancel" onClick={onClose}>취소</button>
-        </div>
-      </div>
-    </div>
-  );
-}
+// API 및 컴포넌트 임포트
+import api from './api';
+import DashboardHeader from './components/DashboardHeader';
+import DashboardNav from './components/DashboardNav';
+import ChatRoomList from './components/ChatRoomList';
+import RelationList from './components/RelationList';
+import SearchSection from './components/SearchSection';
+import MemberActionModal from './components/modals/MemberActionModal';
+import RelationActionModal from './components/modals/RelationActionModal';
+
+import ChatRoomView from './ChatRoomView'; 
 
 function HomePage() {
-  const navigate = useNavigate(); // 페이지 이동을 위한 navigate 훅 사용
-  const [memberNick, setMemberNick] = useState(''); // 로그인한 사용자 닉네임 상태
-  const [memberId, setMemberId] = useState(''); // 로그인한 자신의 memberId 상태 (String 타입)
-  const [activeTab, setActiveTab] = useState('private'); // 활성 탭 상태 ('private', 'multi', 'friends', 'blocked')
+  const navigate = useNavigate();
+  // ... (기존의 모든 useState, useRef 선언은 그대로 유지) ...
+  const [memberNick, setMemberNick] = useState('');
+  const [memberId, setMemberId] = useState('');
+  const [activeTab, setActiveTab] = useState('private');
+  const [privateRooms, setPrivateRooms] = useState([]);
+  const [multiRooms, setMultiRooms] = useState([]);
+  const [followList, setFollowList] = useState([]);
+  const [blockList, setBlockList] = useState([]);
+  const [memberInfoList, setMemberInfoList] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [searchError, setSearchError] = useState('');
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedMemberForModal, setSelectedMemberForModal] = useState(null);
+  const [isRelationModalOpen, setIsRelationModalOpen] = useState(false);
+  const [selectedRelationForModal, setSelectedRelationForModal] = useState(null);
+  const tabRefs = useRef({});
+  const indicatorRef = useRef(null);
+  const [indicatorStyle, setIndicatorStyle] = useState({ left: 0, width: 0 });
+  const [activeChatRoom, setActiveChatRoom] = useState(null); 
 
-  // 로그인 응답에서 받아온 데이터 상태 (localStorage에서 로드)
-  const [privateRooms, setPrivateRooms] = useState([]); // 1:1 채팅방 목록
-  const [multiRooms, setMultiRooms] = useState([]); // 단체 채팅방 목록
-  const [followList, setFollowList] = useState([]); // 친구 목록 (관계 정보: RelationShip DTO)
-  const [blockList, setBlockList] = useState([]); // 차단 목록 (관계 정보: RelationShip DTO)
-  const [memberInfoList, setMemberInfoList] = useState([]); // 친구/차단 목록의 닉네임 조회를 위함 (MemberInfo DTO)
 
-  // 검색 기능 관련 상태
-  const [searchQuery, setSearchQuery] = useState(''); // 검색 입력값
-  const [searchResults, setSearchResults] = useState([]); // 검색 결과 멤버 리스트 (MemberInfo DTO)
-  const [searchLoading, setSearchLoading] = useState(false); // 검색 로딩 상태
-  const [searchError, setSearchError] = useState(''); // 검색 에러 메시지
-
-  // MemberActionModal 관련 상태 (검색 결과 클릭 시 사용)
-  const [isModalOpen, setIsModalOpen] = useState(false); // 모달 열림/닫힘 상태
-  const [selectedMemberForModal, setSelectedMemberForModal] = useState(null); // 모달에 전달할 선택된 멤버 정보 (MemberInfo DTO)
-
-  // RelationActionModal 관련 상태 (친구/차단 목록 클릭 시 사용)
-  const [isRelationModalOpen, setIsRelationModalOpen] = useState(false); // 관계 모달 열림/닫힘 상태
-  // 선택된 관계의 원본 RelationShip 객체와 해당 멤버의 MemberInfo 객체, 관계 타입을 저장
-  const [selectedRelationForModal, setSelectedRelationForModal] = useState(null); 
-
-  // 탭 인디케이터 관련 useRef 및 useState
-  const tabRefs = useRef({}); // 각 탭 버튼의 DOM 요소를 참조
-  const indicatorRef = useRef(null); // 탭 인디케이터 div를 참조
-  const [indicatorStyle, setIndicatorStyle] = useState({ left: 0, width: 0 }); // 인디케이터의 스타일
-
-  // ★★★ 초기 데이터 로딩 및 상태 업데이트 함수 ★★★
-  // 컴포넌트 마운트 시 localStorage에서 사용자 정보 및 관련 리스트를 가져와 상태에 설정
   const loadInitialData = () => {
     const storedNick = localStorage.getItem('memberNick'); // localStorage에서 닉네임 가져오기
     const storedId = localStorage.getItem('memberId'); // localStorage에서 memberId 가져오기
@@ -296,15 +269,6 @@ function HomePage() {
     }
   };
 
-  // 개인 채팅하기 버튼 클릭 핸들러 (MemberActionModal 내)
-  const handleStartPrivateChat = (member) => {
-    toast.info(`${member.nick}님과 개인 채팅을 시작합니다! (가상)`);
-    console.log('개인 채팅 시작 요청:', member);
-    handleModalClose(); // 모달 닫기
-    navigate(`/chat-room/${member.nick}`); // 예시 URL 이동
-  };
-
-
   // ★★★ 관계 목록 항목 클릭 핸들러 (RelationActionModal 열기) ★★★
   const handleRelationClick = (relation, memberInfo, type) => {
     // relation: RelationShip 객체 (relationshipId, memberId, type)
@@ -320,7 +284,6 @@ function HomePage() {
     setTimeout(() => setSelectedRelationForModal(null), 300); // 애니메이션 후 정보 초기화
   };
 
-  // ★★★ 관계 모달: 친구 해제하기 버튼 클릭 핸들러 ★★★
   const handleUnfriend = async (relation, member) => {
     // 실제 친구 해제 API 호출 로직 (예: DELETE /relationships/unfollow)
     try {
@@ -345,7 +308,6 @@ function HomePage() {
     }
   };
 
-  // ★★★ 관계 모달: 차단 해제 버튼 클릭 핸들러 ★★★
   const handleUnblock = async (relation, member) => {
     // 실제 차단 해제 API 호출 로직 (예: DELETE /relationships/unblock)
     try {
@@ -373,14 +335,53 @@ function HomePage() {
     }
   };
 
-  // 관계 모달: 친구와 채팅하기 버튼 클릭 핸들러
-  const handleStartChatWithFriend = (member) => {
-    toast.info(`${member.nick}님과 채팅을 시작합니다! (가상 - 친구목록에서)`);
-    console.log('친구와 채팅 시작 요청:', member);
-    handleRelationModalClose(); // 모달 닫기
-    navigate(`/chat-room/${member.nick}`); // 예시 URL 이동
+  const handleStartPrivateChat = async (memberToChat) => {
+    try {
+
+      const memberIds = [memberToChat.memberId];
+      
+      const response = await api.createChatRoom(memberIds, 'PRIVATE');
+
+    if (response.success && response.data?.roomId) {
+        const newRoomId = response.data.roomId;
+        const newRoomTitle = response.data.roomTitle ;
+        const newRoomType = response.data.roomType ;
+        
+        toast.success(`${memberToChat.nick}님과의 채팅방이 생성되었습니다!`);
+        console.log(`Chat room created/found with ID: ${newRoomId}, Title: ${newRoomTitle}`);
+        
+        // privateRooms 상태 업데이트
+        const newRoom = { roomId: newRoomId, roomTitle: newRoomTitle, roomType: newRoomType };
+        setPrivateRooms(prevRooms => {
+            // 이미 목록에 있는 방인지 확인 (중복 추가 방지)
+            if (prevRooms.some(room => room.roomId === newRoom.roomId)) {
+                toast.info(`${memberToChat.nick}님과의 채팅방이 이미 존재합니다.`);
+                setActiveTab('private'); // 해당 탭으로 이동
+                return prevRooms;
+            }
+            const updatedRooms = [...prevRooms, newRoom]; // 새로운 방을 기존 목록에 추가
+            localStorage.setItem('privateRooms', JSON.stringify(updatedRooms)); // localStorage도 업데이트
+            return updatedRooms;
+        });
+
+        setActiveTab('private'); // 1:1 채팅방 탭으로 활성화
+
+      } else {
+        toast.error(response.message || '채팅방 생성에 실패했습니다.');
+      }
+    } catch (error) {
+      toast.error(error.message || '채팅방 생성 중 네트워크 오류가 발생했습니다.');
+    } finally {
+      handleCloseMemberActionModal();
+      handleCloseRelationModal();
+    }
   };
 
+  const handleStartChatWithFriend = (member) => {
+    handleStartPrivateChat(member);
+  };
+
+  
 
   if (!memberNick || !memberId) { // memberNick 또는 memberId가 없으면 로딩 메시지 표시
     return (
@@ -389,128 +390,107 @@ function HomePage() {
       </div>
     );
   }
-
-  return (
-    <div className="chat-dashboard">
-      <div className="dashboard-header">
-        <h2>환영합니다, {memberNick}님!</h2>
-        <button onClick={handleLogout}>로그아웃</button>
-      </div>
-
-      <div className="dashboard-nav">
-        <button
-          className={activeTab === 'private' ? 'active' : ''}
-          onClick={() => setActiveTab('private')}
-          ref={el => tabRefs.current['private'] = el}
-        >
-          1:1 채팅방
-        </button>
-        <button
-          className={activeTab === 'multi' ? 'active' : ''}
-          onClick={() => setActiveTab('multi')}
-          ref={el => tabRefs.current['multi'] = el}
-        >
-          단체 채팅방
-        </button>
-        <button
-          className={activeTab === 'friends' ? 'active' : ''}
-          onClick={() => setActiveTab('friends')}
-          ref={el => tabRefs.current['friends'] = el}
-        >
-          친구 목록
-        </button>
-        <button
-          className={activeTab === 'blocked' ? 'active' : ''}
-          onClick={() => setActiveTab('blocked')}
-          ref={el => tabRefs.current['blocked'] = el}
-        >
-          차단 목록
-        </button>
+return (
+    // ★★★ 전체 레이아웃 컨테이너 (index.css에 정의된 flex 컨테이너) ★★★
+    <div className="main-layout-container">
+      <div className="chat-dashboard">
+        {/* ... (기존 DashboardHeader, DashboardNav 등 UI 요소 유지) ... */}
         
-        <div className="tab-indicator" ref={indicatorRef} style={indicatorStyle}></div>
-      </div>
+        <div className="dashboard-header">
+          <h2>환영합니다, {memberNick}님!</h2>
+          <button onClick={handleLogout}>로그아웃</button>
+        </div>
 
-      <div className="dashboard-content">
-        {activeTab === 'private' && ( // 1:1 채팅방 탭 내용
-          <ChatRoomList title="나의 1:1 채팅방" rooms={privateRooms} type="private" />
-        )}
-        {activeTab === 'multi' && ( // 단체 채팅방 탭 내용
-          <ChatRoomList title="나의 단체 채팅방" rooms={multiRooms} type="multi" />
-        )}
-        {activeTab === 'friends' && ( // 친구 목록 탭 내용
-          <>
-            <div className="search-section">
-              <h3>새로운 친구 찾기</h3>
-              <div className="search-input-group">
-                <input
-                  type="text"
-                  placeholder="닉네임으로 검색..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyPress={handleKeyPress}
-                  disabled={searchLoading}
-                />
-                <button onClick={handleSearch} disabled={searchLoading}>
-                  {searchLoading ? '검색 중...' : '검색'}
-                </button>
-              </div>
+        <div className="dashboard-nav">
+          <button
+            className={activeTab === 'private' ? 'active' : ''}
+            onClick={() => setActiveTab('private')}
+            ref={el => tabRefs.current['private'] = el}
+          >
+            1:1 채팅방
+          </button>
+          <button
+            className={activeTab === 'multi' ? 'active' : ''}
+            onClick={() => setActiveTab('multi')}
+            ref={el => tabRefs.current['multi'] = el}
+          >
+            단체 채팅방
+          </button>
+          <button
+            className={activeTab === 'friends' ? 'active' : ''}
+            onClick={() => setActiveTab('friends')}
+            ref={el => tabRefs.current['friends'] = el}
+          >
+            친구 목록
+          </button>
+          <button
+            className={activeTab === 'blocked' ? 'active' : ''}
+            onClick={() => setActiveTab('blocked')}
+            ref={el => tabRefs.current['blocked'] = el}
+          >
+            차단 목록
+          </button>
+          
+          <div className="tab-indicator" ref={indicatorRef} style={indicatorStyle}></div>
+        </div>
 
-              {searchError && <p className="message error">{searchError}</p>}
-              
-              {searchResults.length > 0 && ( // 검색 결과가 있을 때만 표시
-                <div className="search-results">
-                  <h4>검색 결과</h4>
-                  <ul className="item-list">
-                    {searchResults.map((member) => ( // 검색 결과 멤버 렌더링
-                      <li key={member.memberId} onClick={() => handleSearchResultClick(member)}>
-                        <span>{member.nick}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </div>
-
-            {/* 관계 목록 컴포넌트: 친구 목록 */}
-            <RelationList 
-              title="나의 친구 목록" 
-              relations={followList} 
-              memberInfos={memberInfoList} 
-              relationType="follow" 
-              onRelationClick={handleRelationClick} // 클릭 이벤트 전달
+        <div className="dashboard-content">
+          {/* 탭 내용 조건부 렌더링 */}
+          {activeTab === 'private' && ( 
+            <PrivateChatSection privateRooms={privateRooms} onRoomClick={handleOpenChatRoomView} />
+          )}
+          {activeTab === 'multi' && (
+            <MultiChatSection multiRooms={multiRooms} onRoomClick={handleOpenChatRoomView} />
+          )}
+          {activeTab === 'friends' && ( 
+            <FriendsSection 
+              memberId={memberId} 
+              followList={followList} 
+              memberInfoList={memberInfoList} 
+              onRelationClick={handleOpenRelationActionModal} 
+              onSearchResultClick={handleOpenMemberActionModal} 
             />
-          </>
-        )}
-        {activeTab === 'blocked' && ( // 차단 목록 탭 내용
-          <RelationList 
-            title="나의 차단 목록" 
-            relations={blockList} 
-            memberInfos={memberInfoList} 
-            relationType="block" 
-            onRelationClick={handleRelationClick} // 클릭 이벤트 전달
-          />
-        )}
+          )}
+          {activeTab === 'blocked' && ( 
+            <BlockedSection 
+              blockList={blockList} 
+              memberInfos={memberInfoList} 
+              onRelationClick={handleOpenRelationActionModal} 
+            />
+          )}
+        </div>
+
+        {/* MemberActionModal 렌더링 (검색 결과 클릭 시) */}
+        <MemberActionModal
+          isOpen={isModalOpen} 
+          onClose={handleCloseModal} 
+          member={selectedMemberForModal} 
+          onAddFriend={handleAddFriend} 
+          onBlockMember={handleBlockMember} 
+          onStartPrivateChat={handleStartPrivateChat} 
+        />
+
+        {/* 관계 목록 클릭 시 모달 (RelationActionModal) */}
+        <RelationActionModal
+          isOpen={isRelationModalOpen} 
+          onClose={handleCloseRelationModal} 
+          relationInfo={selectedRelationForModal} 
+          onUnfriend={handleUnfriend} 
+          onUnblock={handleUnblock} 
+          onStartChatWithFriend={handleStartPrivateChat} 
+        />
       </div>
 
-      {/* 검색 결과 클릭 시 모달 (MemberActionModal) */}
-      <MemberActionModal
-        isOpen={isModalOpen} // 모달 열림 상태
-        onClose={handleModalClose} // 모달 닫기 핸들러
-        member={selectedMemberForModal} // 선택된 멤버 정보
-        onAddFriend={handleAddFriend} // 친구 추가 핸들러
-        onBlockMember={handleBlockMember} // 차단 핸들러
-        onStartPrivateChat={handleStartPrivateChat} // 개인 채팅 핸들러
-      />
-
-      {/* ★★★ 관계 목록 클릭 시 모달 (RelationActionModal) ★★★ */}
-      <RelationActionModal
-        isOpen={isRelationModalOpen} // 관계 모달 열림 상태
-        onClose={handleRelationModalClose} // 관계 모달 닫기 핸들러
-        relationInfo={selectedRelationForModal} // 선택된 관계 정보
-        onUnfriend={handleUnfriend} // 친구 해제 핸들러
-        onUnblock={handleUnblock} // 차단 해제 핸들러
-        onStartChatWithFriend={handleStartChatWithFriend} // 관계 모달에서 채팅 시작 핸들러
-      />
+      {/* ★★★ 채팅방 뷰 컴포넌트 렌더링 ★★★ */}
+      {/* activeChatRoom 상태가 null이 아닐 때만 ChatRoomView를 렌더링 */}
+      {activeChatRoom && (
+        <ChatRoomView
+          roomId={activeChatRoom.roomId}
+          roomTitle={activeChatRoom.roomTitle}
+          currentMemberId={memberId} // 현재 로그인한 사용자 ID
+          onRoomClose={handleCloseChatRoomView} // 닫기 핸들러 전달
+        />
+      )}
     </div>
   );
 }

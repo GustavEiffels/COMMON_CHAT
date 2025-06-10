@@ -15,13 +15,13 @@ public class RoomService {
 
 // 채팅방 생성
     public DomainRoomDto.CreateInfo create(DomainRoomDto.CreateCommand command){
-        if (command.type().equals(RoomEnum.RoomType.PRIVATE)) {
+        if ( command.type().equals(RoomEnum.RoomType.PRIVATE) ) {
             Long otherId = command.memberIds().get(0);
             List<Room> roomList = repository.findRoom(command.ownerId(), otherId, RoomEnum.RoomType.PRIVATE);
 
             if (!roomList.isEmpty()) {
                 if (roomList.size() == 1) {
-                    return DomainRoomDto.CreateInfo.fromDomain(roomList.get(0));
+                    return DomainRoomDto.CreateInfo.fromDomain(roomList.get(0), RoomEnum.CreateFlag.EXIST);
                 }
                 throw new BaseException(ChatroomException.PRIVATE_MULTI_EXCEPTION);
             }
@@ -29,7 +29,7 @@ public class RoomService {
 
         Room room = repository.saveRoom(command.toDomain());
 
-        return DomainRoomDto.CreateInfo.fromDomain(room);
+        return DomainRoomDto.CreateInfo.fromDomain(room,RoomEnum.CreateFlag.NEW);
     }
 
 
@@ -96,9 +96,14 @@ public class RoomService {
     }
 
 
+// 채팅방 찾기
     public DomainRoomDto.FindRoomInfo findLogin(DomainRoomDto.FindRoomCommand command){
         return DomainRoomDto.FindRoomInfo.fromDomainList(repository.findRoomByMemberWhenLogin(command.memberId()));
     }
 
+    public Participant findParticipant(Long ownerId,Long roomId){
+        return repository.findParticipant(ownerId,roomId)
+                .orElseThrow(()-> new BaseException(ChatroomException.NOT_EXIST_PARTICIPANT));
+    }
 
 }

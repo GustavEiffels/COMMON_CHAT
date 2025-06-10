@@ -34,7 +34,6 @@ public class MemberFacade {
         memberService.update(criteria.toCommand());
     }
 
-
     @Transactional
     public FacadeMemberDto.LoginResult login(FacadeMemberDto.LoginCriteria criteria) {
         DomainMemberDto.LoginInfo memberLoginInfo = memberService.login(criteria.toCommand());

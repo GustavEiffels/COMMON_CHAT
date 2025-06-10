@@ -35,13 +35,16 @@ public record DomainRoomDto() {
     }
     public record CreateInfo(
             Long roomId,
-            RoomEnum.RoomType type
+            RoomEnum.RoomType type,
+
+            RoomEnum.CreateFlag createFlag
     )
     {
-        public static CreateInfo fromDomain(Room room){
+        public static CreateInfo fromDomain(Room room, RoomEnum.CreateFlag flag){
             return new CreateInfo(
                     room.roomId(),
-                    room.type()
+                    room.type(),
+                    flag
             );
         }
     }

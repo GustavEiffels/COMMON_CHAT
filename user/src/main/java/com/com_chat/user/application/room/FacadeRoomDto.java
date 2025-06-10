@@ -8,13 +8,12 @@ import java.util.List;
 public record FacadeRoomDto() {
 
     public record CreateCriteria(
-            Long ownerId,
             List<Long> memberIds,
             RoomEnum.RoomType type
     )
     {
 
-        public DomainRoomDto.CreateCommand toCommand(){
+        public DomainRoomDto.CreateCommand toCommand(Long ownerId){
             return new DomainRoomDto.CreateCommand(
                     ownerId,
                     memberIds,
@@ -24,7 +23,9 @@ public record FacadeRoomDto() {
     }
 
     public record CreateResult(
-            Long roomId
+            Long roomId,
+            String title,
+            RoomEnum.RoomType type
     )
     {}
 

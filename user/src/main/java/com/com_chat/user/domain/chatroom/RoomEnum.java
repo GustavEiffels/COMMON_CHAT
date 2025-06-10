@@ -6,4 +6,8 @@ public class RoomEnum {
         PRIVATE,MULTI
     }
 
+
+    public enum CreateFlag{
+        NEW,EXIST
+    }
 }

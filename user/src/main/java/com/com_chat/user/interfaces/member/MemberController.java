@@ -1,6 +1,5 @@
 package com.com_chat.user.interfaces.member;
 
-import com.com_chat.user.application.member.FacadeMemberDto;
 import com.com_chat.user.application.member.MemberFacade;
 import com.com_chat.user.support.exceptions.ApiResponse;
 import lombok.RequiredArgsConstructor;
