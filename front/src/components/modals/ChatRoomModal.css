@@ -1,0 +1,422 @@
+/* src/components/modals/ChatRoomModal.css */
+
+/* --- General Reset & Base Styles --- */
+.modal-overlay * {
+    box-sizing: border-box;
+    font-family: 'Helvetica Neue', 'Apple SD Gothic Neo', 'Malgun Gothic', '맑은 고딕', sans-serif;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* --- Modal Overlay & Container --- */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.4);
+    display: flex; /* 초기 중앙 정렬을 위한 flex, 이제는 drag로 위치 이동 */
+    justify-content: center; /* 초기 중앙 정렬 */
+    align-items: center; /* 초기 중앙 정렬 */
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease-out, visibility 0.3s ease-out;
+}
+
+.modal-overlay.open {
+    opacity: 1;
+    visibility: visible;
+}
+
+.chat-modal-container {
+    background: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    width: 95%;
+    max-width: 380px;
+    height: 95%;
+    max-height: 700px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+
+    /* ★ 모달 이동을 위한 스타일 변경 ★ */
+    position: fixed; /* 절대 위치 대신 고정 위치로 변경 */
+    transform: none; /* 이전 transform 애니메이션 제거 */
+    transition: opacity 0.3s ease-out; /* 등장/사라짐 애니메이션은 유지 */
+    /* top, left는 JS에서 인라인 스타일로 제어 */
+}
+
+.modal-overlay.open .chat-modal-container {
+    /* 모달이 열릴 때 transform 애니메이션 제거, JS가 위치 제어 */
+    transform: none;
+}
+
+
+/* --- Chat Header --- */
+.chat-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 15px;
+    background-color: #f7f7f7;
+    border-bottom: 1px solid #eeeeee;
+    flex-shrink: 0;
+    /* 드래그 가능 영역임을 나타내는 커서 */
+    cursor: grab;
+}
+
+.chat-header:active {
+    cursor: grabbing;
+}
+
+
+.header-left {
+    display: flex;
+    align-items: center;
+    /* gap: 10px; */ /* 프로필 이미지 제거로 간격 불필요 */
+}
+
+.header-chat-title {
+    font-size: 1.1em;
+    font-weight: 600;
+    color: #333333;
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.header-icon-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #666666;
+    transition: color 0.2s ease;
+    border-radius: 50%;
+}
+
+.header-icon-button:hover {
+    color: #333333;
+    background-color: #e8e8e8;
+}
+
+.header-icon-button svg {
+    width: 20px;
+    height: 20px;
+}
+
+/* --- Chat Body --- */
+.modal-body {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    overflow: hidden;
+    background-color: #e0f2f7; /* 예시: 밝은 파란색 계열 */
+}
+
+.chat-messages-container {
+    flex: 1;
+    overflow-y: auto;
+    padding: 15px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0,0,0,0.2) transparent;
+}
+
+.chat-messages-container::-webkit-scrollbar {
+    width: 6px;
+}
+
+.chat-messages-container::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.chat-messages-container::-webkit-scrollbar-thumb {
+    background-color: rgba(0,0,0,0.2);
+    border-radius: 10px;
+}
+
+/* --- Date Divider --- */
+.chat-date-divider {
+    text-align: center;
+    margin: 15px auto;
+    font-size: 0.8em;
+    color: #ffffff;
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 10px;
+    padding: 5px 10px;
+    display: inline-block;
+    max-width: 80%;
+    white-space: nowrap;
+}
+
+/* --- Chat Message Bubbles --- */
+.chat-message {
+    display: flex;
+    margin-bottom: 8px;
+    align-items: flex-end; /* 버블과 타임스탬프 하단 정렬 */
+    position: relative;
+    /* 썸네일 제거로 인한 조정 및 좌우 여백 확보 */
+    margin-left: 0;
+    margin-right: 0;
+    width: 100%; /* 부모 너비에 맞춰 */
+}
+
+/* 내가 보낸 메시지 - 우측 정렬 */
+.chat-message.my-message {
+    justify-content: flex-end; /* 내용물 우측 정렬 */
+    margin-left: auto; /* 남은 공간을 왼쪽으로 밀어내기 */
+    margin-right: 2px; /* ★ 우측에서 2px 떨어지게 */
+    flex-direction: row-reverse; /* 시간 -> 버블 순서 */
+}
+
+/* 상대방 메시지 - 좌측 정렬 */
+.chat-message.other-message {
+    justify-content: flex-start; /* 내용물 좌측 정렬 */
+    margin-right: auto; /* 남은 공간을 오른쪽으로 밀어내기 */
+    margin-left: 8px; /* ★ 좌측에서 8px 정도 떨어지게 */
+}
+
+
+.message-bubble-wrapper {
+    display: flex;
+    flex-direction: column;
+    /* 썸네일 제거로 인한 max-width 계산 조정 */
+    max-width: calc(100% - 60px); /* 시간 + 여백 + 꼬리 등 고려 */
+}
+
+.other-message .message-sender {
+    font-weight: 500;
+    font-size: 0.85em;
+    color: #555555;
+    margin-bottom: 4px;
+    margin-left: 0px; /* 버블과 딱 붙도록 */
+}
+
+.message-content-bubble {
+    padding: 9px 12px;
+    border-radius: 12px;
+    word-wrap: break-word;
+    font-size: 0.9em;
+    line-height: 1.4;
+    position: relative;
+    max-width: 100%;
+}
+
+.other-message .message-content-bubble {
+    background-color: #ffffff;
+    color: #333333;
+    border: 1px solid #e0e0e0;
+    border-bottom-left-radius: 2px;
+}
+.other-message .message-content-bubble::before {
+    content: '';
+    position: absolute;
+    left: -7px;
+    bottom: 0;
+    width: 0;
+    height: 0;
+    border: 8px solid transparent;
+    border-right-color: #e0e0e0;
+    border-bottom-color: #e0e0e0;
+    transform: rotate(45deg);
+    z-index: -1;
+}
+.other-message .message-content-bubble::after {
+    content: '';
+    position: absolute;
+    left: -6px;
+    bottom: 1px;
+    width: 0;
+    height: 0;
+    border: 8px solid transparent;
+    border-right-color: #ffffff;
+    border-bottom-color: #ffffff;
+    transform: rotate(45deg);
+    z-index: 1;
+}
+
+.my-message .message-content-bubble {
+    background-color: #fee500; /* 카톡 노란색 */
+    color: #333333;
+    border-bottom-right-radius: 2px;
+}
+.my-message .message-content-bubble::before {
+    content: '';
+    position: absolute;
+    right: -7px;
+    bottom: 0;
+    width: 0;
+    height: 0;
+    border: 8px solid transparent;
+    border-left-color: #e0e0e0;
+    border-bottom-color: #e0e0e0;
+    transform: rotate(-45deg);
+    z-index: -1;
+}
+.my-message .message-content-bubble::after {
+    content: '';
+    position: absolute;
+    right: -6px;
+    bottom: 1px;
+    width: 0;
+    height: 0;
+    border: 8px solid transparent;
+    border-left-color: #fee500;
+    border-bottom-color: #fee500;
+    transform: rotate(-45deg);
+    z-index: 1;
+}
+
+.message-timestamp {
+    font-size: 0.65em;
+    color: #888888;
+    align-self: flex-end; /* 버블 하단에 정렬 */
+    margin-left: 8px; /* 시간과 버블 간격 */
+    white-space: nowrap; /* 줄바꿈 방지 */
+}
+.my-message .message-timestamp {
+    align-self: flex-start; /* 내 메시지일 때 시간 왼쪽 정렬 */
+    margin-right: 8px;
+    margin-left: 0;
+}
+
+/* --- File Message Type --- */
+.message-file {
+    display: flex;
+    flex-direction: column;
+    background-color: #ffffff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 10px 15px;
+    font-size: 0.9em;
+    color: #333333;
+}
+
+.file-info {
+    margin-bottom: 8px;
+}
+
+.file-name {
+    font-weight: 600;
+    color: #333;
+    display: block;
+    margin-bottom: 2px;
+}
+
+.file-details {
+    font-size: 0.8em;
+    color: #666;
+}
+
+.file-actions {
+    display: flex;
+    gap: 8px;
+    border-top: 1px solid #e0e0e0;
+    padding-top: 8px;
+    margin-top: 8px;
+}
+
+.file-actions button {
+    background: none;
+    border: 1px solid #cccccc;
+    border-radius: 5px;
+    padding: 5px 10px;
+    font-size: 0.85em;
+    cursor: pointer;
+    color: #333;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.file-actions button:hover {
+    background-color: #e8e8e8;
+    border-color: #999999;
+}
+
+/* --- Link Message Type --- */
+.message-link {
+    color: #007bff;
+    text-decoration: underline;
+    word-break: break-all;
+}
+.message-link:hover {
+    color: #0056b3;
+}
+
+/* --- Chat Input Footer --- */
+.chat-input-footer {
+    border-top: 1px solid #dddddd;
+    background-color: #f7f7f7;
+    padding: 10px 15px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+}
+
+.input-message-area {
+    flex: 1;
+    display: flex;
+    gap: 8px;
+    align-items: flex-end;
+}
+
+.input-message-area textarea {
+    flex: 1;
+    border: 1px solid #cccccc;
+    border-radius: 6px;
+    padding: 10px 15px;
+    font-size: 0.95em;
+    line-height: 1.4;
+    resize: none;
+    overflow-y: hidden;
+    min-height: 48px;
+    max-height: 120px;
+    background-color: #ffffff;
+    color: #333333;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.input-message-area textarea:focus {
+    border-color: #a0a0a0;
+    box-shadow: 0 0 0 1px #a0a0a0;
+    outline: none;
+}
+
+.send-message-button {
+    background-color: #cccccc;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    width: auto;
+    min-width: 60px;
+    height: 48px;
+    padding: 0 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 0.9em;
+    font-weight: 600;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+    flex-shrink: 0;
+}
+
+.send-message-button.active {
+    background-color: #fee500;
+    color: #333333;
+}
+.send-message-button.active:hover {
+    background-color: #fdd835;
+}
+.send-message-button.active:active {
+    transform: translateY(1px);
+}
