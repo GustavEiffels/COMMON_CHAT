@@ -47,11 +47,6 @@ function ChatRoomModal({ isOpen, onClose, room, memberId, memberNick }) {
       // 새로운 스크린샷에 맞춰 메시지 데이터 업데이트
       setMessages([
         { id: 1, type: 'link', sender: 'OtherUser', text: 'https://www.instagram.com/reel/DKOr5c_SeAC/?igsh=MWh6cxgwQXh1OHdseQ==', timestamp: new Date('2025-06-11T01:26:00') },
-        { id: 2, type: 'link', sender: 'OtherUser', text: 'https://www.instagram.com/reel/DKPWadD9B-6G/?igsh=ZGV3emJ5YkK4bzBt', timestamp: new Date('2025-06-11T01:26:00') },
-        { id: 3, type: 'date', date: 'Saturday, June 7, 2025' },
-        { id: 4, type: 'text', sender: memberNick, text: '암호화 2-des 이중 암호화 mit 방식으로 보안우려 : 2^48개로 추려짐', timestamp: new Date('2025-06-07T11:06:00') },
-        { id: 5, type: 'text', sender: 'OtherUser', text: '안녕하세요! 오랜만이에요.', timestamp: new Date('2025-06-07T11:07:00') },
-        { id: 6, type: 'text', sender: memberNick, text: '네, 반갑습니다! 잘 지내셨어요?', timestamp: new Date('2025-06-07T11:08:00') },
       ]);
       messagesEndRef.current?.scrollIntoView({ behavior: 'auto' });
     }
@@ -165,20 +160,6 @@ function ChatRoomModal({ isOpen, onClose, room, memberId, memberNick }) {
               if (msg.type === 'date') {
                 return <div key={msg.id} className="chat-date-divider">{msg.date}</div>;
               }
-              // 'time_with_bubble' 타입 제거
-              // else if (msg.type === 'time_with_bubble') {
-              //   return (
-              //     <div key={msg.id} className="chat-time-bubble-wrapper">
-              //       <span className="time-bubble-text">{msg.time}</span>
-              //       <div className="time-bubble-icon">
-              //         <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
-              //           <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/>
-              //           <circle cx="12" cy="12" r="3"/>
-              //         </svg>
-              //       </div>
-              //     </div>
-              //   );
-              // }
 
               const isMyMessage = msg.sender === memberNick;
               const timeString = msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }) : '';
@@ -222,25 +203,6 @@ function ChatRoomModal({ isOpen, onClose, room, memberId, memberNick }) {
 
         {/* 하단 입력 영역 */}
         <div className="chat-input-footer">
-          {/* 하단 아이콘들 제거 */}
-          {/* <div className="input-icons-bottom">
-            <button className="icon-button">
-              <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-2.5-6.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm5 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM12 17.5c-2.33 0-4.32-1.45-5.11-3.5h10.22c-.79 2.05-2.78 3.5-5.11 3.5z"/></svg>
-            </button>
-            <button className="icon-button">
-              <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M19 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.11 0 2-.9 2-2V5c0-1.1-.89-2-2-2zm-9 14l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
-            </button>
-            <button className="icon-button">
-              <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>
-            </button>
-            <button className="icon-button">
-              <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.2-3c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg>
-            </button>
-            <button className="icon-button rotate-icon">
-              <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg>
-            </button>
-          </div> */}
-
           <div className="input-message-area">
             <textarea
               value={newMessage}

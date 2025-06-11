@@ -172,9 +172,7 @@
 
 /* 내가 보낸 메시지 - 우측 정렬 */
 .chat-message.my-message {
-    justify-content: flex-end; /* 내용물 우측 정렬 */
-    margin-left: auto; /* 남은 공간을 왼쪽으로 밀어내기 */
-    margin-right: 2px; /* ★ 우측에서 2px 떨어지게 */
+    margin-right: 1px; /* ★ 우측에서 2px 떨어지게 */
     flex-direction: row-reverse; /* 시간 -> 버블 순서 */
 }
 
@@ -209,6 +207,12 @@
     line-height: 1.4;
     position: relative;
     max-width: 100%;
+}
+
+.message-text {
+  white-space: pre-wrap;
+  margin: 0;
+  padding: 0;
 }
 
 .other-message .message-content-bubble {
@@ -284,7 +288,7 @@
     white-space: nowrap; /* 줄바꿈 방지 */
 }
 .my-message .message-timestamp {
-    align-self: flex-start; /* 내 메시지일 때 시간 왼쪽 정렬 */
+    align-self: flex-end; /* 내 메시지일 때 시간 왼쪽 정렬 */
     margin-right: 8px;
     margin-left: 0;
 }
@@ -350,6 +354,7 @@
 .message-link:hover {
     color: #0056b3;
 }
+
 
 /* --- Chat Input Footer --- */
 .chat-input-footer {
