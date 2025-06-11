@@ -8,11 +8,13 @@ import java.util.List;
 public record ApiRoomDto() {
     public record CreateRequest(
         List<Long> memberIds,
-        RoomEnum.RoomType type
+        RoomEnum.RoomType type,
+        String title
     )
     {
         public FacadeRoomDto.CreateCriteria toCriteria(){
-            return new FacadeRoomDto.CreateCriteria(memberIds,type);
+            System.out.println("title : "+title);
+            return new FacadeRoomDto.CreateCriteria(memberIds,type,title);
         }
     }
 

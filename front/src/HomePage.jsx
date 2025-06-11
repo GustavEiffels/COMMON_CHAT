@@ -12,9 +12,8 @@ import RelationList from './components/RelationList';
 import SearchSection from './components/SearchSection';
 import MemberActionModal from './components/modals/MemberActionModal';
 import RelationActionModal from './components/modals/RelationActionModal';
-
-// 새로 추가된 채팅방 모달 임포트
 import ChatRoomModal from './components/modals/ChatRoomModal';
+import CreateGroupChatModal from './components/modals/CreateGroupChatModal';
 
 function HomePage() {
   const navigate = useNavigate();
@@ -42,6 +41,7 @@ function HomePage() {
   // ★★★ 채팅방 모달 관련 상태 ★★★
   const [isChatModalOpen, setIsChatModalOpen] = useState(false); // 채팅 모달 열림 상태
   const [currentChatRoom, setCurrentChatRoom] = useState(null); // 현재 열린 채팅방 정보
+  const [isCreateGroupChatModalOpen, setIsCreateGroupChatModalOpen] = useState(false);
 
 
   // ... (기존의 loadInitialData, useEffects 등은 변경 없음) ...
@@ -312,7 +312,7 @@ function HomePage() {
   const handleStartPrivateChat = async (memberToChat) => {
     try {
       const memberIds = [memberToChat.memberId];
-      const response = await api.createChatRoom(memberIds, 'PRIVATE');
+      const response = await api.createChatRoom(memberIds, 'PRIVATE','');
 
       if (response.success && response.data?.roomId) {
         const newRoomId = response.data.roomId;
@@ -359,12 +359,59 @@ function HomePage() {
     setCurrentChatRoom(room);
     setIsChatModalOpen(true);
   };
+  const handleCloseChatModal = () => { setIsChatModalOpen(false); setTimeout(() => setCurrentChatRoom(null), 300); };
 
   // ★★★ 채팅 모달 닫기 핸들러 ★★★
-  const handleCloseChatModal = () => {
-    setIsChatModalOpen(false);
-    setTimeout(() => setCurrentChatRoom(null), 300); // 모달 닫힘 애니메이션 후 데이터 초기화
+  const handleOpenCreateGroupChatModal = () => {
+    if (followList.length === 0) {
+      toast.warn('단체 채팅방을 만들려면 먼저 친구를 추가해야 합니다.');
+      return;
+    }
+    setIsCreateGroupChatModalOpen(true);
   };
+
+  // ★★★ 단체 채팅방 생성 모달 닫기 핸들러 ★★★
+  const handleCloseCreateGroupChatModal = () => {
+    setIsCreateGroupChatModalOpen(false);
+  };
+
+ const handleCreateGroupChat = async (selectedFriendIds, roomTitle) => {
+    // 유효성 검사는 모달 내부에서 처리하지만, 여기서도 한번 더 할 수 있습니다.
+    if (selectedFriendIds.length === 0) {
+      toast.warn('채팅에 참여할 친구를 1명 이상 선택해주세요.');
+      return;
+    }
+    
+
+    try {
+      const response = await api.createChatRoom(selectedFriendIds, 'MULTI', roomTitle.trim());
+
+      if (response.success && response.data?.roomId) {
+        const newRoom = {
+          roomId: response.data.roomId,
+          roomTitle: response.data.roomTitle,
+          roomType: response.data.roomType,
+        };
+
+        setMultiRooms(prevRooms => {
+            const updatedRooms = [...prevRooms, newRoom];
+            localStorage.setItem('multiRooms', JSON.stringify(updatedRooms));
+            return updatedRooms;
+        });
+
+        toast.success(`'${newRoom.roomTitle}' 단체 채팅방이 생성되었습니다!`);
+        handleCloseCreateGroupChatModal(); // 생성 모달 닫기
+        setCurrentChatRoom(newRoom); // 새로 생성된 채팅방으로 설정
+        setIsChatModalOpen(true); // 채팅 모달 열기
+
+      } else {
+        toast.error(response.message || '단체 채팅방 생성에 실패했습니다.');
+      }
+    } catch (error) {
+      toast.error(error.message || '단체 채팅방 생성 중 네트워크 오류가 발생했습니다.');
+    }
+  };
+
 
 
   if (!memberNick || !memberId) {
@@ -375,6 +422,10 @@ function HomePage() {
     );
   }
 
+  const friendDetails = followList
+    .map(relation => memberInfoList.find(info => info.memberId === relation.memberId))
+    .filter(Boolean); 
+    
   return (
     <div className="chat-dashboard">
       <DashboardHeader memberNick={memberNick} onLogout={handleLogout} />
@@ -398,12 +449,22 @@ function HomePage() {
           />
         )}
         {activeTab === 'multi' && (
-          <ChatRoomList
-            title="나의 단체 채팅방"
-            rooms={multiRooms}
-            type="multi"
-            onRoomClick={handleRoomClick}
-          />
+          <>
+            <div className="list-header">
+              <h2 className="list-title">나의 단체 채팅방</h2>
+              <button
+                className="create-group-chat-btn"
+                onClick={handleOpenCreateGroupChatModal}>
+                단체 채팅방 만들기
+              </button>
+            </div>
+            <ChatRoomList
+              // title prop은 list-header에서 렌더링하므로 제거
+              rooms={multiRooms}
+              type="multi"
+              onRoomClick={handleRoomClick}
+            />
+          </>
         )}
         {activeTab === 'friends' && (
           <>
@@ -463,6 +524,12 @@ function HomePage() {
         room={currentChatRoom} // 현재 선택된 채팅방 정보 전달
         memberId={memberId}
         memberNick={memberNick}
+      />
+      <CreateGroupChatModal
+        isOpen={isCreateGroupChatModalOpen}
+        onClose={handleCloseCreateGroupChatModal}
+        onCreate={handleCreateGroupChat}
+        friends={friendDetails}
       />
     </div>
   );

@@ -14,7 +14,8 @@ public record DomainRoomDto() {
 
             List<Long> memberIds,
 
-            RoomEnum.RoomType type
+            RoomEnum.RoomType type,
+            String title
     )
     {
         public CreateCommand{
@@ -27,6 +28,7 @@ public record DomainRoomDto() {
             if( type.equals(RoomEnum.RoomType.MULTI) && memberIds.isEmpty() ){
                 throw new BaseException(ChatroomException.MULTI_MEMBER_NOT_EXIST);
             }
+
         }
 
         public Room toDomain(){
@@ -51,6 +53,8 @@ public record DomainRoomDto() {
     public record CreateRelationCommand(
             Long roomId,
             Long hostMemberId,
+
+            String title,
             List<Long> participants,
             Map<Long, String> memberNickInfo,
             RoomEnum.RoomType roomType

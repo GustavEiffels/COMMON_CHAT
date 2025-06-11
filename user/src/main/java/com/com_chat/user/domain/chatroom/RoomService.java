@@ -79,7 +79,9 @@ public class RoomService {
         }
         else{
             int     participantsCnt = command.participants().size();
-            String  roomTitle       = command.memberNickInfo().get(command.hostMemberId())+" with "+(participantsCnt-1);
+            String  roomTitle       = command.title().isEmpty()
+                    ? command.memberNickInfo().get(command.hostMemberId())+" with "+(participantsCnt-1)
+                    : command.title();
             command.participants().forEach(memberId->{
                 participants.add(
                         Participant.create(

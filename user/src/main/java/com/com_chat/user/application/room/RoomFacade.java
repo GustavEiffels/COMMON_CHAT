@@ -51,6 +51,7 @@ public class RoomFacade {
             roomService.createRelation(new DomainRoomDto.CreateRelationCommand(
                     roomInfo.roomId(),
                     loginMemberId,
+                    criteria.title(),
                     criteria.memberIds(),
                     nickInfo,
                     roomInfo.type()

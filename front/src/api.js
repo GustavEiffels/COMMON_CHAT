@@ -207,7 +207,7 @@ const api = {
     }
   },
 
-  createChatRoom: async (memberIds, type) => {
+  createChatRoom: async (memberIds, type, title) => {
     try {
       const accessToken = localStorage.getItem('accessToken');
       if (!accessToken) {
@@ -215,6 +215,8 @@ const api = {
       }
 
       console.log('memberIds : ',memberIds)
+      console.log('memberIds : ',title)
+
 
       const response = await fetch(`${API_BASE_URL}/rooms`, {
         method: 'POST',
@@ -222,7 +224,7 @@ const api = {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${accessToken}`
         },
-        body: JSON.stringify({ memberIds, type }),
+        body: JSON.stringify({ memberIds, type, title}),
       });
 
       const data = await response.json(); 

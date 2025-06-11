@@ -9,7 +9,8 @@ public record FacadeRoomDto() {
 
     public record CreateCriteria(
             List<Long> memberIds,
-            RoomEnum.RoomType type
+            RoomEnum.RoomType type,
+            String title
     )
     {
 
@@ -17,7 +18,8 @@ public record FacadeRoomDto() {
             return new DomainRoomDto.CreateCommand(
                     ownerId,
                     memberIds,
-                    type
+                    type,
+                    title
             );
         }
     }

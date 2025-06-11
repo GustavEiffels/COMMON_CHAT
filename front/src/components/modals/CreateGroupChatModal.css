@@ -1,0 +1,293 @@
+/* src/components/modals/CreateGroupChatModal.css */
+
+/* --- 오버레이 --- */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  opacity: 0;
+  transition: opacity 0.3s ease-in-out;
+}
+
+.modal-overlay.open {
+  opacity: 1;
+}
+
+/* --- 모달 컨테이너 --- */
+.create-chat-modal-container {
+  width: 420px;
+  min-height: 600px; /* 모달 최소 높이 지정으로 길이 확보 */
+  max-height: 90vh;
+  background-color: #fff;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  position: absolute;
+  overflow: hidden; /* 내부 요소가 모서리를 벗어나지 않도록 설정 */
+  opacity: 0;
+  transform: scale(0.95);
+  transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+}
+
+.create-chat-modal-container.open {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* --- 헤더 --- */
+.chat-header {
+  padding: 16px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #e9ecef;
+  cursor: grab;
+}
+
+.header-left .header-chat-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #212529;
+}
+
+.header-right .close-modal-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #868e96;
+}
+.header-right .close-modal-button:hover {
+  color: #343a40;
+}
+
+/* --- 모달 본문 --- */
+.modal-body {
+  padding: 24px;
+  overflow-y: auto;
+  flex-grow: 1;
+  background-color: #fff;
+}
+
+.form-group {
+  margin-bottom: 24px;
+}
+
+.form-group label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: #495057;
+  font-size: 0.9rem;
+}
+
+.form-group input[type="text"] {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ced4da;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  box-sizing: border-box;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.form-group input[type="text"]:focus {
+  outline: none;
+  border-color: #80bdff;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, .25);
+}
+
+/* --- 친구 검색창 스타일 --- */
+.friend-search-wrapper {
+  position: relative;
+  margin-bottom: 12px;
+}
+
+.friend-search-wrapper svg {
+  position: absolute;
+  top: 50%;
+  left: 12px;
+  transform: translateY(-50%);
+  color: #adb5bd;
+}
+
+.friend-search-input {
+  width: 100%;
+  padding: 10px 12px 10px 40px; /* 아이콘 공간 확보 */
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  box-sizing: border-box;
+}
+
+.friend-search-input:focus {
+  outline: none;
+  border-color: #80bdff;
+}
+
+/* --- 친구 목록 --- */
+.friend-list-container {
+  max-height: 350px; /* 목록 영역 최대 높이 늘려서 더 길게 */
+  overflow-y: auto;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  padding: 8px;
+}
+
+/* --- 친구 아이템 디자인 --- */
+.friend-item {
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: background-color 0.2s;
+  position: relative;
+  gap: 12px; /* 요소 간 간격 */
+}
+
+.friend-item:hover {
+  background-color: #f8f9fa;
+}
+
+.friend-item.selected {
+  background-color: #e7f5ff;
+}
+
+.friend-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background-color: #dee2e6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #495057;
+  font-weight: bold;
+  font-size: 1.1rem;
+  flex-shrink: 0; /* 크기 줄어들지 않도록 */
+}
+
+.friend-info {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  overflow: hidden; /* 텍스트가 넘칠 경우 대비 */
+}
+
+.friend-nick {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #343a40;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.friend-detail {
+  font-size: 0.8rem;
+  color: #868e96;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.checkbox-custom {
+  width: 22px;
+  height: 22px;
+  border: 2px solid #ced4da;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.friend-item.selected .checkbox-custom {
+  background-color: #007bff;
+  border-color: #007bff;
+}
+
+.checkbox-custom svg {
+  width: 14px;
+  height: 14px;
+  color: white;
+  stroke-width: 3;
+  opacity: 0;
+  transform: scale(0.5);
+  transition: all 0.2s;
+}
+
+.friend-item.selected .checkbox-custom svg {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.no-results {
+  text-align: center;
+  padding: 40px 20px;
+  color: #868e96;
+}
+
+/* --- 푸터 (버튼 영역) --- */
+.modal-footer {
+  padding: 20px 24px;
+  border-top: 1px solid #e9ecef;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  background-color: #f8f9fa;
+}
+
+.footer-button {
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+.cancel-button {
+  background-color: #fff;
+  color: #495057;
+  border-color: #ced4da;
+}
+
+.cancel-button:hover {
+  background-color: #f8f9fa;
+}
+
+/* --- 만들기 버튼 스타일 --- */
+.create-button {
+  background-color: #28a745;
+  color: white;
+  border: none;
+}
+
+.create-button:hover:not(:disabled) {
+  background-color: #218838;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.create-button:disabled {
+  background-color: #e9ecef;
+  color: #adb5bd;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
