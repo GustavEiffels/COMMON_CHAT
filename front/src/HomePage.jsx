@@ -2,7 +2,8 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
-
+import SockJS from 'sockjs-client'; 
+import { Stomp } from '@stomp/stompjs'; 
 // API 및 컴포넌트 임포트
 import api from './api';
 import DashboardHeader from './components/DashboardHeader';
@@ -42,6 +43,8 @@ function HomePage() {
   const [currentChatRoom, setCurrentChatRoom] = useState(null);
   const [isCreateGroupChatModalOpen, setIsCreateGroupChatModalOpen] = useState(false);
 
+  const [isConnected, setIsConnected] = useState(false);
+  const stompClient = useRef(null); // STOMP 클라이언트 인스턴스 저장
 
   // ... (다른 함수들은 기존과 동일) ...
 
@@ -54,6 +57,7 @@ function HomePage() {
     const storedBlockList = JSON.parse(localStorage.getItem('blockList') || '[]');
     const storedMemberInfoList = JSON.parse(localStorage.getItem('memberInfoList') || '[]');
 
+    
     if (storedNick && storedId) {
       setMemberNick(storedNick);
       setMemberId(storedId);
@@ -67,7 +71,24 @@ function HomePage() {
     }
   };
 
-  useEffect(() => { loadInitialData(); }, [navigate]);
+  useEffect(() => { loadInitialData(); }, []);
+  useEffect(() => {
+      console.log("WebSocket useEffect triggered. memberId:", memberId, "isConnected:", isConnected);
+
+      // memberId가 로드되었고, stompClient 인스턴스가 아직 없을 때만 연결 시도
+      if (memberId && !stompClient.current) {
+          console.log("Attempting to connect WebSocket as memberId is available and stompClient is null.");
+          connectWebSocket();
+      }
+
+      // 컴포넌트 언마운트 시 또는 memberId 변경 시 웹소켓 연결 정리
+      return () => {
+        // console.log("WebSocket useEffect cleanup.");
+        if (stompClient.current) {
+          disconnectWebSocket();
+        }
+      };
+    }, [memberId]); // memberId가 변경될 때마다 이 훅이 실행되도록 함
   useEffect(() => {
     setSearchQuery('');
     setSearchResults([]);
@@ -94,7 +115,84 @@ function HomePage() {
     return () => { window.removeEventListener('resize', handleResize); };
   }, [activeTab]);
 
-  const handleLogout = () => { localStorage.clear(); toast.info('로그아웃 되었습니다.'); navigate('/login'); };
+    // ★★★ WebSocket 연결 함수 (HomePage에 통합) ★★★
+  const connectWebSocket = () => {
+    if (stompClient.current && stompClient.current.connected) {
+      toast.info('WebSocket이 이미 연결되어 있습니다.');
+      return;
+    }
+
+    const socket = new SockJS(`http://localhost:8888/chat`); 
+    stompClient.current = Stomp.over(socket);
+
+    stompClient.current.connect({}, (frame) => {
+      setIsConnected(true);
+      toast.success('WebSocket (STOMP) 연결 성공!');
+      console.log('STOMP Connected:', frame);
+
+      privateRooms.forEach(room => {
+        const subscribePath = `/receive/chat/room/${room.roomId}`; 
+        stompClient.current.subscribe(subscribePath, (message) => {
+          console.log(`Received private message for room ${room.roomId}:`, message.body);
+          toast.info(`1:1 채팅방(${room.roomTitle || room.roomId}) 새 메시지: ${message.body}`);
+        });
+        console.log(`Subscribed to private room: ${subscribePath}`);
+      });
+
+      // 단체 채팅방 구독
+      multiRooms.forEach(room => {
+        const subscribePath = `/receive/chat/room/${room.roomId}`;
+        stompClient.current.subscribe(subscribePath, (message) => {
+          console.log(`Received multi message for room ${room.roomId}:`, message.body);
+          toast.info(`단체 채팅방(${room.roomTitle || room.roomId}) 새 메시지: ${message.body}`);
+        });
+        console.log(`Subscribed to multi room: ${subscribePath}`);
+      });      
+
+
+    }, (error) => {
+      setIsConnected(false);
+      toast.error('WebSocket (STOMP) 연결 오류 발생!');
+      console.error('STOMP Connection Error:', error);
+    });
+  };
+
+  // WebSocket(STOMP) 연결 해제 함수 (HomePage에 통합)
+  const disconnectWebSocket = () => {
+    if (stompClient.current) {
+      if (stompClient.current.connected) {
+        stompClient.current.disconnect(() => {
+          setIsConnected(false);
+          toast.warn('WebSocket (STOMP) 연결이 종료되었습니다.');
+          console.log("STOMP Disconnected gracefully.");
+        });
+      }
+      stompClient.current = null;
+    }
+  };
+
+  // ★★★ 컴포넌트 언마운트 시 WebSocket 연결 정리 (HomePage에 통합) ★★★
+  useEffect(() => {
+    return () => {
+      disconnectWebSocket(); // HomePage 언마운트 시 웹소켓 연결 정리
+    };
+  }, []);
+
+  // ★★★ 웹소켓 연결 상태 토글 함수 (HomePage에 통합) ★★★
+  const handleToggleWebSocketConnection = () => {
+    if (isConnected) {
+      disconnectWebSocket();
+    } else {
+      connectWebSocket();
+    }
+  };
+
+  const handleLogout = () => {
+    disconnectWebSocket(); // 로그아웃 시 웹소켓 연결도 끊기
+    localStorage.clear();
+    toast.info('로그아웃 되었습니다.');
+    navigate('/login');
+  };
   const handleSearch = async () => {
     if (!searchQuery.trim()) { toast.warn('검색어를 입력해주세요.'); setSearchResults([]); setSearchError(''); return; }
     setSearchLoading(true); setSearchError(''); setSearchResults([]);
