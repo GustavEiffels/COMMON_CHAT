@@ -13,6 +13,7 @@ public class MessageController {
 
     @MessageMapping("/")
     public void send(@RequestBody MessageApiDto.SendMsgRequest request){
+        System.out.println("request : "+request);
         messageService.send(request.toCommand());
     }
 }
