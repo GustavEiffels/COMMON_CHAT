@@ -13,12 +13,13 @@ const MessageLoadType = {
   NEW: 'NEW'      // 새 메시지 로딩 (특정 시점 이후 메시지 로딩, 여기서는 사용 안함)
 };
 
-function ChatRoomModal({ isOpen, onClose, room, memberId, memberNick, stompClient }) {
+// chatModalAddMessageRef prop을 추가합니다.
+function ChatRoomModal({ isOpen, onClose, room, memberId, memberNick, stompClient, chatModalAddMessageRef }) {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const messagesEndRef = useRef(null); // 메시지 리스트의 가장 하단으로 스크롤하기 위한 ref
   const messagesContainerRef = useRef(null); // 메시지 스크롤 컨테이너 ref (무한 스크롤 감지용)
-  const subscriptionRef = useRef(null); // STOMP 구독 객체를 저장하기 위한 ref (이 컴포넌트에서는 사용 안 함)
+  const subscriptionRef = useRef(null); // ★★★ STOMP 구독 객체를 저장하기 위한 ref (다시 활성화) ★★★
   const modalRef = useRef(null); // 모달 DOM 요소를 참조하기 위한 ref (드래그용)
   const isDragging = useRef(false); // 현재 드래그 중인지 여부
   const offset = useRef({ x: 0, y: 0 }); // 마우스 클릭 지점과 모달 상단-좌측 간의 오프셋
@@ -27,10 +28,21 @@ function ChatRoomModal({ isOpen, onClose, room, memberId, memberNick, stompClien
   const [isLoadingMessages, setIsLoadingMessages] = useState(false); // 메시지 로딩 중인지 여부
   const [hasMoreMessages, setHasMoreMessages] = useState(true); // 더 로드할 메시지가 있는지 여부 (무한 스크롤)
 
-  // ★ 추가: 모달이 한 번이라도 열려 초기 메시지를 로드했는지 추적하는 Ref
-  const hasOpenedOnceRef = useRef(false);
+  const hasOpenedOnceRef = useRef(false); // 모달이 한 번이라도 열려 초기 메시지를 로드했는지 추적하는 Ref
 
-  // --- 드래그 관련 핸들러 ---
+  // ★★★ HomePage로부터 받은 실시간 메시지를 상태에 추가하는 함수 ★★★
+  const addRealtimeMessage = useCallback((message) => {
+    // 메시지 수신 시 Date 객체로 파싱
+    const parsedMessage = {
+      ...message,
+      createDateTime: message.createDateTime ? new Date(message.createDateTime) : new Date(),
+      createDate: message.createDate ? new Date(message.createDate) : new Date()
+    };
+    setMessages(prevMessages => [...prevMessages, parsedMessage]);
+  }, []); // 의존성 없음 (prevMessages 함수형 업데이트 사용)
+
+
+  // --- 드래그 관련 핸들러 (이전과 동일) ---
   const handleMouseDown = useCallback((e) => {
     if (e.target.closest('.chat-header')) { // 헤더에서만 드래그 가능하도록 제한
       if (modalRef.current) {
@@ -100,12 +112,11 @@ function ChatRoomModal({ isOpen, onClose, room, memberId, memberNick, stompClien
     const initialScrollHeight = messagesContainerRef.current ? messagesContainerRef.current.scrollHeight : 0;
 
     try {
-      // JWT 토큰 관련 로직은 제거됨. 백엔드에서 인증을 요구하지 않는다고 가정합니다.
       const requestBody = {
         roomId: roomId,
         count: count,
         type: loadType,
-        currentMinCnt: currentMinCnt // PREV 로딩 시에만 사용될 값
+        currentMinCnt: currentMinCnt
       };
 
       console.log("Fetching messages with requestBody:", requestBody);
@@ -114,38 +125,34 @@ function ChatRoomModal({ isOpen, onClose, room, memberId, memberNick, stompClien
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          // 'Authorization': `Bearer ${accessToken}` // 이 라인은 제거됨
+          // 'Authorization': `Bearer ${accessToken}` // 인증 필요시 주석 해제 (HomePage에서 토큰 관리)
         },
         body: JSON.stringify(requestBody),
       });
 
-      const data = await response.json(); // 응답 본문을 JSON으로 파싱
-      console.log('API Response data: ', data); // 응답 구조 확인용 로그
+      const data = await response.json();
+      console.log('API Response data: ', data);
 
-      // 서버 응답 성공 (HTTP response.ok & data.error가 없을 때)
-      if (response.ok && !data.error) { // data.status === 200 조건은 response.ok에 포함되므로 제거 가능
-        const fetchedMessages = data.messageList || []; // data.messageList로 접근 수정
+      if (response.ok && !data.error) {
+        const fetchedMessages = data.messageList || [];
         const parsedMessages = fetchedMessages.map(msg => ({
           ...msg,
           createDateTime: msg.createDateTime ? new Date(msg.createDateTime) : new Date(),
           createDate: msg.createDate ? new Date(msg.createDate) : new Date()
         }));
 
-        console.log('i wanna sleep')
-
         if (loadType === MessageLoadType.FIRST) {
-          setMessages(parsedMessages); // 초기 로딩: 기존 메시지들을 새로 가져온 메시지들로 대체
-        } else if (loadType === MessageLoadType.NOT_FIRST) { // PREV 대신 NOT_FIRST 사용
-          setMessages(prevMessages => [...parsedMessages, ...prevMessages]); // 이전 로딩: 기존 메시지 앞에 새 메시지들을 추가
+          setMessages(parsedMessages);
+        } else if (loadType === MessageLoadType.NOT_FIRST) {
+          setMessages(prevMessages => [...parsedMessages, ...prevMessages]);
 
-          // 스크롤 위치 유지 로직
           if (messagesContainerRef.current) {
               const newScrollHeight = messagesContainerRef.current.scrollHeight;
               messagesContainerRef.current.scrollTop = newScrollHeight - initialScrollHeight;
           }
         }
 
-        setHasMoreMessages(parsedMessages.length > 0); // 가져온 메시지가 0개면 더 이상 메시지 없음
+        setHasMoreMessages(parsedMessages.length > 0);
 
         if (parsedMessages.length > 0) {
             toast.success(`메시지를 ${parsedMessages.length}개 로드했습니다.`);
@@ -153,42 +160,52 @@ function ChatRoomModal({ isOpen, onClose, room, memberId, memberNick, stompClien
             toast.info('더 이상 메시지가 없습니다.');
         }
 
-      } else { // 서버 응답이 실패했거나 비즈니스 로직 오류 (data.error 존재)
+      } else {
         const errorMessage = data.error ? data.error.message : (data.message || '메시지 로드 실패: 알 수 없는 오류');
-        // HTTP 상태 코드에 따른 에러 처리 및 리디렉션 로직도 여기서는 제거됨
         toast.error(errorMessage || `API 오류: ${response.status}`);
         setHasMoreMessages(false);
       }
-    } catch (error) { // 네트워크 오류 등 fetch 자체가 실패했을 때
+    } catch (error) {
       console.error('메시지 로드 중 네트워크 오류 발생:', error);
       toast.error('메시지 로드 중 네트워크 오류가 발생했습니다.');
       setHasMoreMessages(false);
     } finally {
-      setIsLoadingMessages(false); // 로딩 상태 종료
+      setIsLoadingMessages(false);
     }
   }, [isLoadingMessages]); // `isLoadingMessages`만 의존성으로 두어 불필요한 재렌더링 방지.
 
   // --- 모달 열릴 때 초기 메시지 로드 (한 번만 수행) ---
   useEffect(() => {
-    // `isOpen`이 true이고, `room.roomId`가 유효하며,
-    // 아직 한 번도 초기 로딩을 하지 않았을 때만 `fetchMessages`를 호출합니다.
     if (isOpen && room?.roomId && !hasOpenedOnceRef.current) {
-      setMessages([]); // 방이 변경될 때마다 메시지 초기화 (새로운 방을 열 때마다 초기화)
-      setHasMoreMessages(true); // 새 방이 열리면 더 로드할 메시지가 있다고 가정
+      setMessages([]);
+      setHasMoreMessages(true);
 
-      fetchMessages(room.roomId, MessageLoadType.FIRST, 20); // 해당 방의 초기 (가장 최신) 메시지를 로드 (count: 20으로 가정)
+      fetchMessages(room.roomId, MessageLoadType.FIRST, 20);
 
-      hasOpenedOnceRef.current = true; // 초기 로딩이 시작되었음을 표시
+      hasOpenedOnceRef.current = true;
     } else if (!isOpen) {
-        // 모달이 닫힐 때 `hasOpenedOnceRef`를 `false`로 초기화하면
-        // 다음번에 모달을 다시 열 때 `fetchMessages`가 다시 실행됩니다.
-        // 만약 모달을 닫았다 열어도 메시지 기록을 유지하고 싶다면 이 라인을 주석 처리합니다.
-        hasOpenedOnceRef.current = false;
+        hasOpenedOnceRef.current = false; // 모달 닫을 때 초기화: 다시 열면 새로 로드
     }
 
-    // 클린업 함수 (STOMP 구독 제거되었으므로 여기서는 불필요)
     return () => { };
-  }, [isOpen, room, fetchMessages]); // `fetchMessages`는 `useCallback`으로 감싸져 있으므로 여기에 포함.
+  }, [isOpen, room, fetchMessages]);
+
+  // ★★★ chatModalAddMessageRef를 HomePage의 Ref에 연결하는 useEffect (addRealtimeMessage 함수 등록) ★★★
+  useEffect(() => {
+    if (isOpen && chatModalAddMessageRef) {
+      chatModalAddMessageRef.current = addRealtimeMessage; // ref에 addRealtimeMessage 함수 등록
+      console.log("ChatRoomModal: addRealtimeMessage connected to HomePage's ref.");
+    } else if (chatModalAddMessageRef) {
+      chatModalAddMessageRef.current = null; // 모달 닫힐 때 ref 해제
+      console.log("ChatRoomModal: addRealtimeMessage disconnected from HomePage's ref.");
+    }
+    // addRealtimeMessage는 useCallback으로 감싸져 있으므로 의존성에 추가해도 괜찮습니다.
+    return () => {
+        if (chatModalAddMessageRef.current) {
+            chatModalAddMessageRef.current = null;
+        }
+    };
+  }, [isOpen, chatModalAddMessageRef, addRealtimeMessage]); 
 
   // --- 메시지 스크롤 하단 고정 ---
   useEffect(() => {
@@ -202,18 +219,12 @@ function ChatRoomModal({ isOpen, onClose, room, memberId, memberNick, stompClien
     if (messagesContainerRef.current) {
       const { scrollTop } = messagesContainerRef.current;
 
-      // 스크롤이 맨 위로 올라갔고 (scrollTop === 0),
-      // 현재 로딩 중이 아니며 (!isLoadingMessages),
-      // 더 로드할 메시지가 있으며 (hasMoreMessages),
-      // 메시지가 최소 하나 이상 있을 때 (messages.length > 0)
       if (scrollTop === 0 && !isLoadingMessages && hasMoreMessages && messages.length > 0) {
-        const oldestMsgRoomCnt = messages[0].msgRoomCnt; // 현재 보이는 메시지 중 가장 오래된 (가장 작은) msgRoomCnt
+        const oldestMsgRoomCnt = messages[0].msgRoomCnt;
 
-        // msgRoomCnt가 1보다 클 때만 이전 메시지 로드 시도 (msgRoomCnt는 1부터 시작한다고 가정)
         if (oldestMsgRoomCnt !== undefined && oldestMsgRoomCnt > 1) {
-          fetchMessages(room.roomId, MessageLoadType.NOT_FIRST, 20, oldestMsgRoomCnt); // 이전 메시지 로드
+          fetchMessages(room.roomId, MessageLoadType.NOT_FIRST, 20, oldestMsgRoomCnt);
         } else {
-          // msgRoomCnt가 1이거나 그 이하면 더 이상 이전 메시지가 없다고 판단
           setHasMoreMessages(false);
           toast.info('더 이상 이전 메시지가 없습니다.');
         }
@@ -242,28 +253,15 @@ function ChatRoomModal({ isOpen, onClose, room, memberId, memberNick, stompClien
         roomPid: room.roomId,
       };
 
-      const destination = `/send/`;
+      const destination = `/send/`; // 서버의 @MessageMapping("/") 경로
 
       try {
         stompClient.send(destination, {}, JSON.stringify(messagePayload));
         setNewMessage('');
         console.log('Message sent:', messagePayload);
-        // 클라이언트에서 메시지 전송 후 즉시 UI 업데이트 (낙관적 업데이트)
-        // 실제로는 서버에서 브로드캐스트된 메시지를 수신하여 UI 업데이트하는 것이 더 정확하지만,
-        // 이 컴포넌트에서는 STOMP 구독을 제거했으므로 이 방식이 필요합니다.
-        setMessages((prevMessages) => [
-          ...prevMessages,
-          {
-            id: Date.now().toString(), // 임시 고유 ID
-            sender: memberNick, // 현재 사용자의 닉네임
-            messageContents: messagePayload.messageContents,
-            userPid: memberId,
-            roomPid: room.roomId,
-            createDateTime: new Date(),
-            createDate: new Date(),
-            msgRoomCnt: null // 서버에서 부여될 값이므로 임시로 null
-          },
-        ]);
+        // ★★★ 메시지 전송 후 낙관적 업데이트 제거 유지 ★★★
+        // 이제 서버에서 브로드캐스트된 메시지를 HomePage가 받아 이 컴포넌트의 addRealtimeMessage를 통해 UI를 업데이트할 것입니다.
+        // 이렇게 하면 내가 보낸 메시지도 서버를 경유하여 화면에 표시되므로, 순서와 정확성이 보장됩니다.
       } catch (error) {
         console.error("Failed to send message via STOMP:", error);
         toast.error("메시지 전송에 실패했습니다.");
@@ -285,8 +283,14 @@ function ChatRoomModal({ isOpen, onClose, room, memberId, memberNick, stompClien
     let lastDate = null;
     const elements = [];
 
-    // 메시지를 msgRoomCnt 기준으로 오름차순으로 정렬합니다.
-    const sortedMessages = [...messages].sort((a, b) => a.msgRoomCnt - b.msgRoomCnt);
+    // 메시지를 msgRoomCnt 기준으로 오름차순으로 정렬합니다. (가장 오래된 메시지가 위에 오도록)
+    const sortedMessages = [...messages].sort((a, b) => {
+        // msgRoomCnt가 없을 경우를 대비한 안전 장치
+        if (a.msgRoomCnt === undefined || b.msgRoomCnt === undefined) {
+            return 0; // 혹은 createDateTime 기준으로 정렬하도록 폴백
+        }
+        return a.msgRoomCnt - b.msgRoomCnt;
+    });
 
     sortedMessages.forEach((msg) => {
       const messageDate = msg.createDate instanceof Date && !isNaN(msg.createDate.getTime())
@@ -305,12 +309,10 @@ function ChatRoomModal({ isOpen, onClose, room, memberId, memberNick, stompClien
       }
 
       const senderNickToDisplay = msg.sender || '알 수 없음';
-      console.log('msg.userPid ',msg.userPid)
-      console.log('memberId ',memberId)
-      console.log('msg.userPid == memberId ',msg.userPid == memberId)
+      
       elements.push(
         <div
-          key={msg.id || `${msg.userPid}-${msg.createDateTime?.getTime() || Date.now()}`}
+          key={msg.id || `<span class="math-inline">\{msg\.userPid\}\-</span>{msg.createDateTime?.getTime() || Date.now()}`}
           className={`chat-message ${msg.userPid == memberId ? 'my-message' : 'other-message'}`}
         >
           {msg.userPid != memberId && ( // 상대방 메시지
