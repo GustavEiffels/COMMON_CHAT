@@ -1,56 +1,125 @@
 // src/components/modals/ChatRoomModal.jsx
-import React, { useState, useEffect, useRef } from 'react';
+
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { toast } from 'react-toastify';
 import './ChatRoomModal.css';
 
-function ChatRoomModal({ isOpen, onClose, room, memberId, memberNick }) {
-  // 스크린샷에 맞춰 빈 문자열로 초기화
-  const [newMessage, setNewMessage] = useState('');
+function ChatRoomModal({ isOpen, onClose, room, memberId, memberNick, stompClient }) {
   const [messages, setMessages] = useState([]);
+  const [newMessage, setNewMessage] = useState('');
   const messagesEndRef = useRef(null);
-
-  const [isAnimatingOut, setIsAnimatingOut] = useState(false);
-
-  const [isDragging, setIsDragging] = useState(false);
-  const [position, setPosition] = useState({
-    x: (window.innerWidth - 380) / 2,
-    y: (window.innerHeight - 700) / 2
-  });
-  const offset = useRef({ x: 0, y: 0 });
+  const subscriptionRef = useRef(null);
   const modalRef = useRef(null);
+  const isDragging = useRef(false);
+  const offset = useRef({ x: 0, y: 0 });
+  const [modalPosition, setModalPosition] = useState({ top: '50%', left: '50%' });
+
+  // 드래그 관련 핸들러는 그대로 유지
+  const handleMouseDown = useCallback((e) => {
+    if (modalRef.current) {
+      isDragging.current = true;
+      const rect = modalRef.current.getBoundingClientRect();
+      offset.current = {
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top,
+      };
+      modalRef.current.style.cursor = 'grabbing';
+      document.body.style.userSelect = 'none';
+    }
+  }, []);
+
+  const handleMouseMove = useCallback((e) => {
+    if (!isDragging.current) return;
+
+    let newLeft = e.clientX - offset.current.x;
+    let newTop = e.clientY - offset.current.y;
+
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    const modalWidth = modalRef.current.offsetWidth;
+    const modalHeight = modalRef.current.offsetHeight;
+
+    newLeft = Math.max(0, Math.min(newLeft, viewportWidth - modalWidth));
+    newTop = Math.max(0, Math.min(newTop, viewportHeight - modalHeight));
+
+    setModalPosition({
+      top: `${newTop}px`,
+      left: `${newLeft}px`,
+    });
+  }, []);
+
+  const handleMouseUp = useCallback(() => {
+    isDragging.current = false;
+    if (modalRef.current) {
+      modalRef.current.style.cursor = 'grab';
+    }
+    document.body.style.userSelect = '';
+  }, []);
 
   useEffect(() => {
     if (isOpen) {
-      document.body.style.overflow = 'hidden';
-      setIsAnimatingOut(false);
-      const modalWidth = modalRef.current?.offsetWidth || 380;
-      const modalHeight = modalRef.current?.offsetHeight || 700;
-      setPosition({
-          x: (window.innerWidth - modalWidth) / 2,
-          y: (window.innerHeight - modalHeight) / 2
-      });
-    } else {
-      setIsAnimatingOut(true);
-      const timer = setTimeout(() => {
-        document.body.style.overflow = 'unset';
-        if (!isOpen) {
-          setMessages([]);
-          setNewMessage(''); // 닫힐 때도 빈 문자열로 초기화
-        }
-      }, 300);
-      return () => clearTimeout(timer);
-    }
-  }, [isOpen]);
+      if (modalRef.current) {
+        // 모달이 처음 열릴 때 중앙에 오도록 한 번 더 계산 (새로고침 시 등)
+        const rect = modalRef.current.getBoundingClientRect();
+        setModalPosition({
+          top: `calc(50% - ${rect.height / 2}px)`,
+          left: `calc(50% - ${rect.width / 2}px)`,
+        });
+      }
 
-  useEffect(() => {
-    if (isOpen && room) {
-      console.log(`Loading chat for room: ${room.roomTitle} (ID: ${room.roomId})`);
-      // 새로운 스크린샷에 맞춰 메시지 데이터 업데이트
-      setMessages([
-        { id: 1, type: 'link', sender: 'OtherUser', text: 'https://www.instagram.com/reel/DKOr5c_SeAC/?igsh=MWh6cxgwQXh1OHdseQ==', timestamp: new Date('2025-06-11T01:26:00') },
-      ]);
-      messagesEndRef.current?.scrollIntoView({ behavior: 'auto' });
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+    } else {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+      isDragging.current = false;
     }
-  }, [isOpen, room]);
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isOpen, handleMouseMove, handleMouseUp]);
+
+
+  // STOMP 연결 및 메시지 구독 로직
+  useEffect(() => {
+    if (!isOpen) return;
+
+    if (room && stompClient && stompClient.connected) {
+      console.log(`Loading chat for room: ${room.roomTitle} (ID: ${room.roomId})`);
+      setMessages([]);
+
+      if (subscriptionRef.current) {
+        subscriptionRef.current.unsubscribe();
+        console.log(`Unsubscribed from previous room: ${room.roomId}`);
+      }
+
+      const subscribePath = `/receive/chat/room/${room.roomId}`;
+      subscriptionRef.current = stompClient.subscribe(subscribePath, (message) => {
+        const receivedMessage = JSON.parse(message.body);
+        console.log(`Received message in ChatRoomModal for room ${room.roomId}:`, receivedMessage);
+        setMessages((prevMessages) => [
+          ...prevMessages,
+          {
+            id: receivedMessage.messageId || Date.now(),
+            sender: receivedMessage.senderNick || 'Unknown',
+            text: receivedMessage.messageContents,
+            timestamp: new Date(receivedMessage.sendAt || Date.now()),
+          },
+        ]);
+      }, { id: `sub-${room.roomId}` });
+
+      console.log(`Subscribed to chat room: ${subscribePath}`);
+    }
+
+    return () => {
+      if (subscriptionRef.current) {
+        subscriptionRef.current.unsubscribe();
+        console.log(`Unsubscribed from room: ${room.roomId}`);
+      }
+    };
+  }, [isOpen, room, stompClient, memberNick]);
 
   useEffect(() => {
     if (isOpen) {
@@ -58,55 +127,35 @@ function ChatRoomModal({ isOpen, onClose, room, memberId, memberNick }) {
     }
   }, [messages, isOpen]);
 
-  const handleMouseDown = (e) => {
-    if (e.target.closest('.header-icon-button') || e.target.closest('.header-chat-title')) {
-      return;
-    }
-    setIsDragging(true);
-    offset.current = {
-      x: e.clientX - modalRef.current.getBoundingClientRect().left,
-      y: e.clientY - modalRef.current.getBoundingClientRect().top,
-    };
-  };
-
-  const handleMouseMove = (e) => {
-    if (!isDragging) return;
-    setPosition({
-      x: e.clientX - offset.current.x,
-      y: e.clientY - offset.current.y,
-    });
-  };
-
-  const handleMouseUp = () => {
-    setIsDragging(false);
-  };
-
-  useEffect(() => {
-    if (isDragging) {
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', handleMouseUp);
-    } else {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-    }
-    return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-    };
-  }, [isDragging]);
-
   const handleSendMessage = () => {
-    if (newMessage.trim()) {
-      const message = {
-        id: messages.length + 1,
-        type: 'text',
-        sender: memberNick,
-        text: newMessage,
-        timestamp: new Date(),
+    if (newMessage.trim() && stompClient && stompClient.connected) {
+      const messagePayload = {
+        messageContents: newMessage.trim(),
+        userPid: memberId,
+        roomPid: room.roomId,
       };
-      setMessages((prevMessages) => [...prevMessages, message]);
-      setNewMessage('');
-      console.log('Sending message:', message);
+
+      const destination = `/send/`;
+
+      try {
+        stompClient.send(destination, {}, JSON.stringify(messagePayload));
+        setNewMessage('');
+        console.log('Message sent:', messagePayload);
+        setMessages((prevMessages) => [
+          ...prevMessages,
+          {
+            id: Date.now(),
+            sender: memberNick,
+            text: messagePayload.messageContents,
+            timestamp: new Date(),
+          },
+        ]);
+      } catch (error) {
+        console.error("Failed to send message via STOMP:", error);
+        toast.error("메시지 전송에 실패했습니다.");
+      }
+    } else if (!stompClient || !stompClient.connected) {
+      toast.warn("WebSocket 연결이 활성화되지 않았습니다. 잠시 후 다시 시도해주세요.");
     }
   };
 
@@ -117,110 +166,101 @@ function ChatRoomModal({ isOpen, onClose, room, memberId, memberNick }) {
     }
   };
 
-  if (!isOpen && !isAnimatingOut) {
+  // 날짜 변경 감지 및 날짜 구분선 렌더링 로직 (여기서는 간단화)
+  const renderMessagesWithDateDividers = () => {
+    let lastDate = null;
+    const elements = [];
+
+    messages.forEach((msg, index) => {
+      const messageDate = new Date(msg.timestamp).toDateString();
+      if (messageDate !== lastDate) {
+        elements.push(
+          <div key={`date-${messageDate}`} className="chat-date-divider">
+            {new Date(msg.timestamp).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })}
+          </div>
+        );
+        lastDate = messageDate;
+      }
+
+      elements.push(
+        <div
+          key={msg.id}
+          className={`chat-message ${msg.sender === memberNick ? 'my-message' : 'other-message'}`}
+        >
+          {msg.sender !== memberNick && ( // 상대방 메시지일 경우에만 닉네임 표시
+            <div className="message-bubble-wrapper">
+              <span className="message-sender">{msg.sender}</span>
+              <div className="message-content-bubble">
+                <p className="message-text">{msg.text}</p>
+              </div>
+            </div>
+          )}
+          {msg.sender === memberNick && ( // 내 메시지
+            <>
+              <span className="message-timestamp">{msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+              <div className="message-bubble-wrapper">
+                <div className="message-content-bubble">
+                  <p className="message-text">{msg.text}</p>
+                </div>
+              </div>
+            </>
+          )}
+          {msg.sender !== memberNick && ( // 상대방 메시지일 때 시간 표시
+            <span className="message-timestamp">{msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+          )}
+        </div>
+      );
+    });
+    return elements;
+  };
+
+
+  if (!isOpen || !room) {
     return null;
   }
 
-  const chatTitle = room?.roomType === 'PRIVATE' ? room.roomTitle : room?.roomTitle || '채팅방';
-  // Send 버튼은 메시지 내용이 있을 때만 활성화 (기존 로직 복원)
-  const isSendButtonActive = newMessage.trim().length > 0;
-
   return (
-    <div
-      className={`modal-overlay ${isOpen ? 'open' : ''}`}
-      onClick={onClose}
-      onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}
-    >
+    <div className={`modal-overlay ${isOpen ? 'open' : ''}`}>
       <div
         ref={modalRef}
-        className={`chat-modal-container ${isOpen ? 'open' : ''}`}
-        style={{ left: position.x, top: position.y }}
-        onClick={(e) => e.stopPropagation()}
+        className="chat-modal-container"
+        style={modalPosition}
       >
-        {/* 상단 헤더 영역 */}
-        <div
-          className="chat-header"
-          onMouseDown={handleMouseDown}
-          style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
-        >
+        <div className="chat-header" onMouseDown={handleMouseDown}>
           <div className="header-left">
-            <span className="header-chat-title">{chatTitle}</span>
+            <h3 className="header-chat-title">{room.roomTitle}</h3>
           </div>
           <div className="header-right">
-            <button onClick={onClose} className="header-icon-button close-modal-button">
-              <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+            <button onClick={onClose} className="header-icon-button">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M6.29289 6.29289C6.68342 5.90237 7.31658 5.90237 7.70711 6.29289L12 10.5858L16.2929 6.29289C16.6834 5.90237 17.3166 5.90237 17.7071 6.29289C18.0976 6.68342 18.0976 7.31658 17.7071 7.70711L13.4142 12L17.7071 16.2929C18.0976 16.6834 18.0976 17.3166 17.7071 17.7071C17.3166 18.0976 16.6834 18.0976 16.2929 17.7071L12 13.4142L7.70711 17.7071C7.31658 18.0976 6.68342 18.0976 6.29289 16.2929L10.5858 12L6.29289 7.70711C5.90237 7.31658 5.90237 6.68342 6.29289 6.29289Z" fill="currentColor"/>
+              </svg>
             </button>
           </div>
         </div>
 
-        {/* 메시지 바디 */}
         <div className="modal-body">
           <div className="chat-messages-container">
-            {messages.map((msg) => {
-              if (msg.type === 'date') {
-                return <div key={msg.id} className="chat-date-divider">{msg.date}</div>;
-              }
-
-              const isMyMessage = msg.sender === memberNick;
-              const timeString = msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }) : '';
-
-              return (
-                <div key={msg.id} className={`chat-message ${isMyMessage ? 'my-message' : 'other-message'}`}>
-                  <div className="message-bubble-wrapper">
-                    {!isMyMessage && <span className="message-sender">{msg.sender}</span>}
-                    <div className="message-content-bubble">
-                      {msg.type === 'text' && <p className="message-text">{msg.text}</p>}
-                      {msg.type === 'file' && (
-                        <div className="message-file">
-                          <div className="file-info">
-                            <span className="file-icon">
-                                <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm-1 7V3.5L18.5 9H13z"/></svg>
-                            </span>
-                            <span className="file-name">{msg.text}</span>
-                            <span className="file-details">Expiry : {msg.expiry} | Size: {msg.size}</span>
-                          </div>
-                          <div className="file-actions">
-                            <button className="file-save-button">Save</button>
-                            <button className="file-save-as-button">Save As</button>
-                          </div>
-                        </div>
-                      )}
-                      {msg.type === 'link' && (
-                        <a href={msg.text} target="_blank" rel="noopener noreferrer" className="message-link">
-                          {msg.text}
-                        </a>
-                      )}
-                    </div>
-                  </div>
-                  {/* 스크린샷에 따라 메시지 버블 아래에 시간 표시 (다시 활성화) */}
-                  <span className="message-timestamp">{timeString}</span>
-                </div>
-              );
-            })}
+            {renderMessagesWithDateDividers()} {/* 날짜 구분선과 메시지 렌더링 함수 호출 */}
             <div ref={messagesEndRef} />
           </div>
         </div>
 
-        {/* 하단 입력 영역 */}
         <div className="chat-input-footer">
           <div className="input-message-area">
             <textarea
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
               onKeyPress={handleKeyPress}
-              placeholder="Enter a message"
+              placeholder="메시지를 입력하세요..."
               rows="1"
-              onInput={(e) => {
-                e.target.style.height = 'auto';
-                e.target.style.height = e.target.scrollHeight + 'px';
-              }}
             />
             <button
               onClick={handleSendMessage}
-              className={`send-message-button ${isSendButtonActive ? 'active' : ''}`}
-              disabled={!isSendButtonActive}
+              className={`send-message-button ${newMessage.trim() ? 'active' : ''}`}
+              disabled={!newMessage.trim()}
             >
-              Send
+              전송
             </button>
           </div>
         </div>
