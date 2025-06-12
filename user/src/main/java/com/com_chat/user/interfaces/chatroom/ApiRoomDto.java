@@ -13,7 +13,6 @@ public record ApiRoomDto() {
     )
     {
         public FacadeRoomDto.CreateCriteria toCriteria(){
-            System.out.println("title : "+title);
             return new FacadeRoomDto.CreateCriteria(memberIds,type,title);
         }
     }

@@ -5,6 +5,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -25,14 +27,10 @@ public class MessageService {
 
     public MessageDomainDto.FindMessageInfo findMessages(MessageDomainDto.FindMessagesCommand command){
         return new MessageDomainDto.FindMessageInfo(
-                command.findMessages().stream().map(findMessage ->{
-                            Page<Message> pageResult = repository.findMessages(
-                                    findMessage.roomId(),
-                                    PageRequest.of(findMessage.page(), 10)
-                            );
-                            return new MessageDomainDto.MessageInfo(findMessage.roomId(), findMessage.page(),pageResult.toList());
-                        }
-                ).toList()
+                command.roomId(),
+                repository.findMessages(command.roomId(),
+                        command.currentMinCnt()
+                )
         );
     }
 

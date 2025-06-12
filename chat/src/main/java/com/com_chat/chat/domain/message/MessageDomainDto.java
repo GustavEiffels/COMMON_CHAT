@@ -27,25 +27,17 @@ public record MessageDomainDto() {
 
 // Find
     public record FindMessagesCommand(
-        List<FindMessage> findMessages
+        Long roomId,
+        Long currentMinCnt
     )
     {}
 
-    public record FindMessage(
-            Long roomId,
-            int page
-    ){}
 
     public record FindMessageInfo(
-            List<MessageInfo> messages
+            Long roomId,
+            List<Message> messageList
     ){}
 
-    public record MessageInfo(
-           Long roomId,
-           int currentPage,
-           List<Message> messageList
-
-    ){}
 
 
 // Invite

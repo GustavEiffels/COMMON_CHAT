@@ -11,5 +11,5 @@ public interface MessageRepository {
 
     Message save(Message message);
 
-    Page<Message> findMessages(Long roomId, Pageable pageable);
+    List<Message> findMessages(Long roomId, Long minRoomCnt);
 }

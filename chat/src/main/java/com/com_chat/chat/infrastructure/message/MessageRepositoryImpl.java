@@ -38,22 +38,24 @@ public class MessageRepositoryImpl implements MessageRepository {
     public Message save(Message message) {
         return mongoRepository.save(MessageEntity.fromDomain(message)).toDomain();
     }
-
     @Override
-    public Page<Message> findMessages(Long roomId, Pageable pageable) {
+    public List<Message> findMessages(Long roomId, Long minRoomCnt) {
 
-        Query query = new Query(Criteria.where("roomPid").is(roomId))
-                .with(Sort.by(Sort.Direction.DESC, "createDateTime"));
+        Long start = minRoomCnt - 10 > 0 ? minRoomCnt - 10 : 1;
+        Long end   = minRoomCnt - 1 >= 1 ? minRoomCnt - 1  : 1;
 
-        long total = template.count(query, MessageEntity.class);
 
-        List<MessageEntity> messageEntities = template.find(query.with(pageable), MessageEntity.class);
+        Query query = new Query(
+                Criteria.where("roomPid").is(roomId).and("msgRoomCnt")
+                        .lte(end).gte(start));
 
-        List<Message> messages = messageEntities.stream()
+        query.with(Sort.by(Sort.Direction.DESC, "msgRoomCnt"));
+
+        List<MessageEntity> messageEntities = template.find(query, MessageEntity.class);
+
+        return messageEntities.stream()
                 .map(MessageEntity::toDomain)
                 .toList();
-
-        return new PageImpl<>(messages, pageable, total);
-
     }
+
 }
