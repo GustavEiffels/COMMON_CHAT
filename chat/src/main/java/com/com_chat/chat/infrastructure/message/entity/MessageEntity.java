@@ -48,4 +48,5 @@ public class MessageEntity {
         entity.createDate = message.createDate();
         return entity;
     }
+
 }

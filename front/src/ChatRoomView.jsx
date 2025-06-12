@@ -12,7 +12,6 @@ function ChatRoomView({ room, memberId, memberNick, onClose, className }) { // c
       console.log(`Loading chat for room: ${room.roomTitle} (ID: ${room.roomId})`);
       // Simulating message load. In a real app, fetch from API.
       setMessages([
-        { id: 1, sender: 'System', text: `Welcome to ${room.roomTitle}!`, timestamp: new Date() },
       ]);
     }
   }, [room]);

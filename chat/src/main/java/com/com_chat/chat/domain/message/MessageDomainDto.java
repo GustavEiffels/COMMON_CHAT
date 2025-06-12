@@ -2,6 +2,7 @@ package com.com_chat.chat.domain.message;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 public record MessageDomainDto() {
 
@@ -23,6 +24,29 @@ public record MessageDomainDto() {
             );
         }
     }
+
+// Find
+    public record FindMessagesCommand(
+        List<FindMessage> findMessages
+    )
+    {}
+
+    public record FindMessage(
+            Long roomId,
+            int page
+    ){}
+
+    public record FindMessageInfo(
+            List<MessageInfo> messages
+    ){}
+
+    public record MessageInfo(
+           Long roomId,
+           int currentPage,
+           List<Message> messageList
+
+    ){}
+
 
 // Invite
     public record InviteCommand(
