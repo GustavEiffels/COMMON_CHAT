@@ -28,7 +28,8 @@ public record MessageDomainDto() {
 // Find
     public record FindMessagesCommand(
         Long roomId,
-        Long currentMinCnt
+        int count,
+        MessageEnum.LoadType type
     )
     {}
 

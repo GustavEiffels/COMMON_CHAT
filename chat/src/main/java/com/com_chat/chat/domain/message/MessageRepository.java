@@ -1,5 +1,6 @@
 package com.com_chat.chat.domain.message;
 
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -11,5 +12,6 @@ public interface MessageRepository {
 
     Message save(Message message);
 
-    List<Message> findMessages(Long roomId, Long minRoomCnt);
+    Page<Message> findMessages(Long roomId, Pageable pageable);
+
 }

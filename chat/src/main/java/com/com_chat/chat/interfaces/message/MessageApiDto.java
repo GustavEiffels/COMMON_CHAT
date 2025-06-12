@@ -3,6 +3,7 @@ package com.com_chat.chat.interfaces.message;
 
 import com.com_chat.chat.domain.message.Message;
 import com.com_chat.chat.domain.message.MessageDomainDto;
+import com.com_chat.chat.domain.message.MessageEnum;
 
 import java.util.List;
 
@@ -25,11 +26,13 @@ public record MessageApiDto() {
 
     public record FindMessagesRequest(
             Long roomId,
-            Long currentMinCnt
+
+            int count,
+            MessageEnum.LoadType type
     ){
         public MessageDomainDto.FindMessagesCommand toCommand(){
             return new MessageDomainDto.FindMessagesCommand(
-                    roomId,currentMinCnt
+                    roomId,count,type
             );
         }
     }

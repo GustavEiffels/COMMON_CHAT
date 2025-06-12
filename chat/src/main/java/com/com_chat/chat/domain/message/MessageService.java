@@ -4,6 +4,7 @@ import com.com_chat.chat.infrastructure.redis.RedisPublisher;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -26,12 +27,19 @@ public class MessageService {
 
 
     public MessageDomainDto.FindMessageInfo findMessages(MessageDomainDto.FindMessagesCommand command){
-        return new MessageDomainDto.FindMessageInfo(
-                command.roomId(),
-                repository.findMessages(command.roomId(),
-                        command.currentMinCnt()
-                )
-        );
+
+        Pageable pageable = null;
+        if( command.type().equals(MessageEnum.LoadType.FIRST) ) {
+            pageable = PageRequest.of(0,20);
+        }
+        else{
+            pageable = PageRequest.of(1, command.count());
+        }
+        Page<Message> messages = repository.findMessages(command.roomId(), pageable);
+
+        System.out.println(" messages : "+messages.stream().toList());
+
+        return new MessageDomainDto.FindMessageInfo(command.roomId(), messages.stream().toList());
     }
 
 }

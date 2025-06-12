@@ -15,6 +15,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Repository
 @RequiredArgsConstructor
@@ -39,23 +40,21 @@ public class MessageRepositoryImpl implements MessageRepository {
         return mongoRepository.save(MessageEntity.fromDomain(message)).toDomain();
     }
     @Override
-    public List<Message> findMessages(Long roomId, Long minRoomCnt) {
+    public Page<Message> findMessages(Long roomId, Pageable pageable) {
 
-        Long start = minRoomCnt - 10 > 0 ? minRoomCnt - 10 : 1;
-        Long end   = minRoomCnt - 1 >= 1 ? minRoomCnt - 1  : 1;
-
-
-        Query query = new Query(
-                Criteria.where("roomPid").is(roomId).and("msgRoomCnt")
-                        .lte(end).gte(start));
+        Query query = new Query(Criteria.where("roomPid").is(roomId));
 
         query.with(Sort.by(Sort.Direction.DESC, "msgRoomCnt"));
 
-        List<MessageEntity> messageEntities = template.find(query, MessageEntity.class);
+        long total = template.count(query, MessageEntity.class);
 
-        return messageEntities.stream()
+        List<MessageEntity> messageEntities = template.find(query.with(pageable), MessageEntity.class);
+
+        List<Message> messages = messageEntities.stream()
                 .map(MessageEntity::toDomain)
-                .toList();
+                .collect(Collectors.toList());
+
+        return new PageImpl<>(messages, pageable, total);
     }
 
 }
