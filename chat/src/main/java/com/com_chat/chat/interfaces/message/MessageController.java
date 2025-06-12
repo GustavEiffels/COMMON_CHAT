@@ -14,6 +14,7 @@ public class MessageController {
 
     @MessageMapping("/")
     public void send(@RequestBody MessageApiDto.SendMsgRequest request){
+        System.out.println("request.messageContents() : "+request.messageContents());
         messageService.send(request.toCommand());
     }
 

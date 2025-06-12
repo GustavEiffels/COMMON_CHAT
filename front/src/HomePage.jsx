@@ -2,8 +2,8 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import SockJS from 'sockjs-client'; 
-import { Stomp } from '@stomp/stompjs'; 
+import SockJS from 'sockjs-client';
+import { Stomp } from '@stomp/stompjs';
 // API 및 컴포넌트 임포트
 import api from './api';
 import DashboardHeader from './components/DashboardHeader';
@@ -13,12 +13,12 @@ import RelationList from './components/RelationList';
 import SearchSection from './components/SearchSection';
 import MemberActionModal from './components/modals/MemberActionModal';
 import RelationActionModal from './components/modals/RelationActionModal';
-import ChatRoomModal from './components/modals/ChatRoomModal';
+import ChatRoomModal from './components/modals/ChatRoomModal'; // 이 모달은 이제 사용되지 않을 수 있습니다.
 import CreateGroupChatModal from './components/modals/CreateGroupChatModal';
+import ChatRoomView from './ChatRoomView'; // ChatRoomView 컴포넌트 임포트
 
 function HomePage() {
   const navigate = useNavigate();
-  // ... (기존의 모든 useState, useRef 선언은 그대로 유지) ...
   const [memberNick, setMemberNick] = useState('');
   const [memberId, setMemberId] = useState('');
   const [activeTab, setActiveTab] = useState('private');
@@ -46,8 +46,6 @@ function HomePage() {
   const [isConnected, setIsConnected] = useState(false);
   const stompClient = useRef(null); // STOMP 클라이언트 인스턴스 저장
 
-  // ... (다른 함수들은 기존과 동일) ...
-
   const loadInitialData = () => {
     const storedNick = localStorage.getItem('memberNick');
     const storedId = localStorage.getItem('memberId');
@@ -57,7 +55,7 @@ function HomePage() {
     const storedBlockList = JSON.parse(localStorage.getItem('blockList') || '[]');
     const storedMemberInfoList = JSON.parse(localStorage.getItem('memberInfoList') || '[]');
 
-    
+
     if (storedNick && storedId) {
       setMemberNick(storedNick);
       setMemberId(storedId);
@@ -72,23 +70,26 @@ function HomePage() {
   };
 
   useEffect(() => { loadInitialData(); }, []);
+
+  // WebSocket 연결 관리 useEffect
   useEffect(() => {
-      console.log("WebSocket useEffect triggered. memberId:", memberId, "isConnected:", isConnected);
+    console.log("WebSocket useEffect triggered. memberId:", memberId, "isConnected:", isConnected);
 
-      // memberId가 로드되었고, stompClient 인스턴스가 아직 없을 때만 연결 시도
-      if (memberId && !stompClient.current) {
-          console.log("Attempting to connect WebSocket as memberId is available and stompClient is null.");
-          connectWebSocket();
+    // memberId가 로드되었고, stompClient 인스턴스가 아직 없을 때만 연결 시도
+    if (memberId && !stompClient.current) {
+      console.log("Attempting to connect WebSocket as memberId is available and stompClient is null.");
+      connectWebSocket();
+    }
+
+    // 컴포넌트 언마운트 시 또는 memberId 변경 시 웹소켓 연결 정리
+    return () => {
+      if (stompClient.current && stompClient.current.connected) {
+        stompClient.current.deactivate(); // STOMP.js v5 이후 버전에서 연결 해제 메서드
+        console.log("STOMP connection deactivated on unmount or memberId change.");
       }
+    };
+  }, [memberId]); // memberId가 변경될 때마다 이 훅이 실행되도록 함
 
-      // 컴포넌트 언마운트 시 또는 memberId 변경 시 웹소켓 연결 정리
-      return () => {
-        // console.log("WebSocket useEffect cleanup.");
-        if (stompClient.current) {
-          disconnectWebSocket();
-        }
-      };
-    }, [memberId]); // memberId가 변경될 때마다 이 훅이 실행되도록 함
   useEffect(() => {
     setSearchQuery('');
     setSearchResults([]);
@@ -101,6 +102,7 @@ function HomePage() {
       setIndicatorStyle({ left: buttonRect.left - navRect.left, width: buttonRect.width });
     }
   }, [activeTab]);
+
   useEffect(() => {
     const handleResize = () => {
       const activeTabButton = tabRefs.current[activeTab];
@@ -115,14 +117,14 @@ function HomePage() {
     return () => { window.removeEventListener('resize', handleResize); };
   }, [activeTab]);
 
-    // ★★★ WebSocket 연결 함수 (HomePage에 통합) ★★★
+  // WebSocket 연결 함수 (HomePage에 통합)
   const connectWebSocket = () => {
     if (stompClient.current && stompClient.current.connected) {
       toast.info('WebSocket이 이미 연결되어 있습니다.');
       return;
     }
 
-    const socket = new SockJS(`http://localhost:8888/chat`); 
+    const socket = new SockJS(`http://localhost:8888/chat`);
     stompClient.current = Stomp.over(socket);
 
     stompClient.current.connect({}, (frame) => {
@@ -130,24 +132,38 @@ function HomePage() {
       toast.success('WebSocket (STOMP) 연결 성공!');
       console.log('STOMP Connected:', frame);
 
-      privateRooms.forEach(room => {
-        const subscribePath = `/receive/chat/room/${room.roomId}`; 
-        stompClient.current.subscribe(subscribePath, (message) => {
-          console.log(`Received private message for room ${room.roomId}:`, message.body);
-          toast.info(`1:1 채팅방(${room.roomTitle || room.roomId}) 새 메시지: ${message.body}`);
-        });
-        console.log(`Subscribed to private room: ${subscribePath}`);
-      });
+      // ★ 모든 채팅방을 한 번에 구독 (이전에는 privateRooms만 구독했음) ★
+      // privateRooms.forEach(room => { // HomePage에서는 이 부분에서 직접 구독하지 않고, ChatRoomView에서 해당 방에 진입했을 때 구독하도록 변경할 수 있습니다.
+      //   const subscribePath = `/receive/chat/room/${room.roomId}`;
+      //   stompClient.current.subscribe(subscribePath, (message) => {
+      //     console.log(`Received private message for room ${room.roomId}:`, message.body);
+      //     toast.info(`1:1 채팅방(${room.roomTitle || room.roomId}) 새 메시지: ${message.body}`);
+      //   });
+      //   console.log(`Subscribed to private room: ${subscribePath}`);
+      // });
 
-      // 단체 채팅방 구독
-      multiRooms.forEach(room => {
-        const subscribePath = `/receive/chat/room/${room.roomId}`;
-        stompClient.current.subscribe(subscribePath, (message) => {
-          console.log(`Received multi message for room ${room.roomId}:`, message.body);
-          toast.info(`단체 채팅방(${room.roomTitle || room.roomId}) 새 메시지: ${message.body}`);
-        });
-        console.log(`Subscribed to multi room: ${subscribePath}`);
-      });      
+      // // 단체 채팅방 구독 (동일하게 HomePage에서는 직접 구독하지 않고, ChatRoomView에서 해당 방에 진입했을 때 구독하도록 변경할 수 있습니다.)
+      // multiRooms.forEach(room => {
+      //   const subscribePath = `/receive/chat/room/${room.roomId}`;
+      //   stompClient.current.subscribe(subscribePath, (message) => {
+      //     console.log(`Received multi message for room ${room.roomId}:`, message.body);
+      //     toast.info(`단체 채팅방(${room.roomTitle || room.roomId}) 새 메시지: ${message.body}`);
+      //   });
+      //   console.log(`Subscribed to multi room: ${subscribePath}`);
+      // });
+
+      // 이 부분은 채팅방 목록에서 새 메시지를 받았을 때만 토스트 알림을 띄우는 용도로 활용될 수 있습니다.
+      // 특정 유저에게 보낼 메시지 (예: 시스템 메시지)를 구독할 수도 있습니다.
+      // registry.setUserDestinationPrefix("/send/private/"); 이 설정과 관련하여
+      // 서버에서 특정 사용자에게 메시지를 보낼 때 /send/private/{userId}/queue/messages 와 같은 경로를 사용한다면,
+      // 클라이언트에서는 /user/queue/messages 경로를 구독하면 됩니다.
+      // 여기서는 예시로 일반적인 사용자 개인 큐를 구독합니다.
+      const userQueuePath = `/user/queue/messages`; // 서버 설정에 따라 정확한 경로 확인 필요
+      stompClient.current.subscribe(userQueuePath, (message) => {
+          console.log(`Received private message for user ${memberId}:`, message.body);
+          toast.info(`개인 알림: ${message.body}`);
+      });
+      console.log(`Subscribed to user queue: ${userQueuePath}`);
 
 
     }, (error) => {
@@ -171,14 +187,14 @@ function HomePage() {
     }
   };
 
-  // ★★★ 컴포넌트 언마운트 시 WebSocket 연결 정리 (HomePage에 통합) ★★★
+  // 컴포넌트 언마운트 시 WebSocket 연결 정리 (HomePage에 통합)
   useEffect(() => {
     return () => {
       disconnectWebSocket(); // HomePage 언마운트 시 웹소켓 연결 정리
     };
   }, []);
 
-  // ★★★ 웹소켓 연결 상태 토글 함수 (HomePage에 통합) ★★★
+  // 웹소켓 연결 상태 토글 함수 (HomePage에 통합)
   const handleToggleWebSocketConnection = () => {
     if (isConnected) {
       disconnectWebSocket();
@@ -193,6 +209,7 @@ function HomePage() {
     toast.info('로그아웃 되었습니다.');
     navigate('/login');
   };
+
   const handleSearch = async () => {
     if (!searchQuery.trim()) { toast.warn('검색어를 입력해주세요.'); setSearchResults([]); setSearchError(''); return; }
     setSearchLoading(true); setSearchError(''); setSearchResults([]);
@@ -207,9 +224,11 @@ function HomePage() {
       } else { setSearchError(response.message || '회원 검색 실패'); toast.error(response.message || '회원 검색에 실패했습니다.'); }
     } catch (error) { setSearchError(error.message || '네트워크 오류 발생'); toast.error(error.message || '회원 검색 중 네트워크 오류가 발생했습니다.'); } finally { setSearchLoading(false); }
   };
+
   const handleKeyPress = (e) => { if (e.key === 'Enter') { handleSearch(); } };
   const handleSearchResultClick = (member) => { setSelectedMemberForModal(member); setIsModalOpen(true); };
   const handleModalClose = () => { setIsModalOpen(false); setTimeout(() => setSelectedMemberForModal(null), 300); };
+
   const handleAddFriend = async (member) => {
     try {
       const response = await api.addFriend(member.memberId);
@@ -221,6 +240,7 @@ function HomePage() {
       } else { toast.error(response.message || `${member.nick}님 친구 추가에 실패했습니다.`); }
     } catch (error) { toast.error(error.message || '친구 추가 중 네트워크 오류가 발생했습니다.'); } finally { handleModalClose(); }
   };
+
   const handleBlockMember = async (member) => {
     try {
       const response = await api.blockMember(member.memberId);
@@ -233,8 +253,10 @@ function HomePage() {
       } else { toast.error(response.message || `${member.nick}님 차단에 실패했습니다.`); }
     } catch (error) { toast.error(error.message || '회원 차단 중 네트워크 오류가 발생했습니다.'); } finally { handleModalClose(); }
   };
+
   const handleRelationClick = (relation, memberInfo, type) => { setSelectedRelationForModal({ relation, member: memberInfo, type }); setIsRelationModalOpen(true); };
   const handleRelationModalClose = () => { setIsRelationModalOpen(false); setTimeout(() => setSelectedRelationForModal(null), 300); };
+
   const handleUnfriend = async (relation, member) => {
     try {
       const response = await api.unfollow(relation.relationshipId);
@@ -244,6 +266,7 @@ function HomePage() {
       } else { toast.error(response.message || `${member.nick}님 친구 관계 해제에 실패했습니다.`); }
     } catch (error) { toast.error(error.message || '친구 관계 해제 중 네트워크 오류가 발생했습니다.'); } finally { handleRelationModalClose(); }
   };
+
   const handleUnblock = async (relation, member) => {
     try {
       const response = await api.unblock(relation.relationshipId);
@@ -254,7 +277,6 @@ function HomePage() {
     } catch (error) { toast.error(error.message || '차단 해제 중 네트워크 오류가 발생했습니다.'); } finally { handleRelationModalClose(); }
   };
 
-  // ★★★ 여기가 수정된 부분입니다 ★★★
   const handleStartPrivateChat = async (memberToChat) => {
     try {
       const memberIds = [memberToChat.memberId];
@@ -267,15 +289,12 @@ function HomePage() {
           roomType: response.data.roomType,
         };
 
-        // 상태를 업데이트 하기 전에, 현재 상태(privateRooms)를 기준으로 방이 이미 존재하는지 확인합니다.
         const roomExists = privateRooms.some(room => room.roomId === newRoom.roomId);
 
         if (roomExists) {
-          // 이미 방이 존재할 경우
           toast.info(`${memberToChat.nick}님과의 채팅방이 이미 존재합니다. 해당 채팅방을 엽니다.`);
           setCurrentChatRoom(privateRooms.find(room => room.roomId === newRoom.roomId));
         } else {
-          // 새로운 방일 경우
           toast.success(`${memberToChat.nick}님과의 채팅방이 생성되었습니다!`);
           const updatedRooms = [...privateRooms, newRoom];
           setPrivateRooms(updatedRooms);
@@ -283,7 +302,6 @@ function HomePage() {
           setCurrentChatRoom(newRoom);
         }
 
-        // 공통 로직
         setActiveTab('private');
         setIsChatModalOpen(true);
 
@@ -303,11 +321,14 @@ function HomePage() {
   const handleStartChatWithFriend = (member) => { handleStartPrivateChat(member); };
   const handleRoomClick = (room) => { setCurrentChatRoom(room); setIsChatModalOpen(true); };
   const handleCloseChatModal = () => { setIsChatModalOpen(false); setTimeout(() => setCurrentChatRoom(null), 300); };
+
   const handleOpenCreateGroupChatModal = () => {
     if (followList.length === 0) { toast.warn('단체 채팅방을 만들려면 먼저 친구를 추가해야 합니다.'); return; }
     setIsCreateGroupChatModalOpen(true);
   };
+
   const handleCloseCreateGroupChatModal = () => { setIsCreateGroupChatModalOpen(false); };
+
   const handleCreateGroupChat = async (selectedFriendIds, roomTitle) => {
     if (selectedFriendIds.length === 0) { toast.warn('채팅에 참여할 친구를 1명 이상 선택해주세요.'); return; }
     try {
@@ -326,7 +347,7 @@ function HomePage() {
   if (!memberNick || !memberId) { return (<div className="auth-container home-page"><p>사용자 정보를 불러오는 중...</p></div>); }
 
   const friendDetails = followList.map(relation => memberInfoList.find(info => info.memberId === relation.memberId)).filter(Boolean);
-    
+
   return (
     <div className="chat-dashboard">
       <DashboardHeader memberNick={memberNick} onLogout={handleLogout} />
@@ -344,7 +365,8 @@ function HomePage() {
         )}
         {activeTab === 'friends' && (
           <>
-            <SearchSection searchQuery={searchQuery} setSearchQuery={setSearchQuery} handleKeyPress={handleKeyPress} handleSearch={handleSearch} searchLoading={searchLoading} searchError={searchError} searchResults={searchResults} handleSearchResultClick={handleSearchResultClick} />
+            <SearchSection searchQuery={searchQuery} setSearchQuery={setSearchQuery} handleKeyPress={handleKeyPress}
+            handleSearch={handleSearch} searchLoading={searchLoading} searchError={searchError} searchResults={searchResults} handleSearchResultClick={handleSearchResultClick} />
             <RelationList title="나의 친구 목록" relations={followList} memberInfos={memberInfoList} relationType="follow" onRelationClick={handleRelationClick} />
           </>
         )}
@@ -352,7 +374,16 @@ function HomePage() {
       </div>
       <MemberActionModal isOpen={isModalOpen} onClose={handleModalClose} member={selectedMemberForModal} onAddFriend={handleAddFriend} onBlockMember={handleBlockMember} onStartPrivateChat={handleStartPrivateChat} />
       <RelationActionModal isOpen={isRelationModalOpen} onClose={handleRelationModalClose} relationInfo={selectedRelationForModal} onUnfriend={handleUnfriend} onUnblock={handleUnblock} onStartChatWithFriend={handleStartChatWithFriend} />
-      <ChatRoomModal isOpen={isChatModalOpen} onClose={handleCloseChatModal} room={currentChatRoom} memberId={memberId} memberNick={memberNick} />
+      {/* ChatRoomModal 대신 ChatRoomView를 사용하고 STOMP 클라이언트 전달 */}
+      {isChatModalOpen && currentChatRoom && (
+        <ChatRoomView
+          room={currentChatRoom}
+          memberId={memberId}
+          memberNick={memberNick}
+          onClose={handleCloseChatModal}
+          stompClient={stompClient.current} // STOMP 클라이언트 인스턴스 전달
+        />
+      )}
       <CreateGroupChatModal isOpen={isCreateGroupChatModalOpen} onClose={handleCloseCreateGroupChatModal} onCreate={handleCreateGroupChat} friends={friendDetails} />
     </div>
   );
