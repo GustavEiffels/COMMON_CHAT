@@ -20,14 +20,14 @@ public record ApiRoomDto() {
     public record CreateResponse(
             Long roomId,
             String roomTitle,
-            RoomEnum.RoomType type
-
+            RoomEnum.RoomType type,
+            List<Long> memberIds
     )
     {
         public static CreateResponse fromResult(
                 FacadeRoomDto.CreateResult result
         ){
-            return new CreateResponse(result.roomId(), result.title(), result.type());
+            return new CreateResponse(result.roomId(), result.title(), result.type(), result.memberIds());
         }
     }
 }

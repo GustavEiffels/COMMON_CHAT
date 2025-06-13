@@ -27,7 +27,8 @@ public record FacadeRoomDto() {
     public record CreateResult(
             Long roomId,
             String title,
-            RoomEnum.RoomType type
+            RoomEnum.RoomType type,
+            List<Long> memberIds
     )
     {}
 

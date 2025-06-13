@@ -64,7 +64,8 @@ public class RoomFacade {
         return new FacadeRoomDto.CreateResult(
                 roomInfo.roomId(),
                 participant.roomTitle(),
-                roomInfo.type()
+                roomInfo.type(),
+                criteria.memberIds()
                 );
     }
 }
