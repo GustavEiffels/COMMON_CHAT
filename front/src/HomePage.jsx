@@ -1,4 +1,3 @@
-// src/HomePage.jsx
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
@@ -52,9 +51,7 @@ function HomePage() {
   const currentChatRoomRef = useRef(currentChatRoom);
   // memberIdRef 추가 (WebSocket 연결 시점에 최신 memberId를 사용하기 위함)
   const memberIdRef = useRef(memberId); 
-  const privateRoomsRef = useRef([]); // privateRooms ref 추가 (초기값 빈 배열)
-  const multiRoomsRef = useRef([]); 
-
+  // privateRoomsRef, multiRoomsRef는 이제 필요 없음. 대신 상태값을 직접 사용.
 
   // --- useEffects to keep refs updated ---
   useEffect(() => {
@@ -70,21 +67,11 @@ function HomePage() {
     memberIdRef.current = memberId;
   }, [memberId]);
 
-// privateRooms 상태 변경 시 ref 업데이트
-  useEffect(() => {
-    privateRoomsRef.current = privateRooms;
-  }, [privateRooms]);
-  // multiRooms 상태 변경 시 ref 업데이트
-  useEffect(() => {
-    multiRoomsRef.current = multiRooms;
-  }, [multiRooms]);
-
   const loadInitialData = useCallback(() => {
     const storedNick = localStorage.getItem('memberNick');
-    const storedId = localStorage.getItem('memberId'); // 이 값은 문자열일 수 있습니다.
+    const storedId = localStorage.getItem('memberId');
     
-    // memberId를 숫자로 변환하여 저장하거나, 일관되게 문자열로 사용
-    setMemberId(storedId ? String(storedId) : ''); // String()으로 명시적으로 문자열로 변환
+    setMemberId(storedId ? String(storedId) : ''); 
     
     const storedPrivateRooms = JSON.parse(localStorage.getItem('privateRooms') || '[]');
     const storedMultiRooms = JSON.parse(localStorage.getItem('multiRooms') || '[]');
@@ -108,9 +95,8 @@ function HomePage() {
     loadInitialData();
   }, [loadInitialData]);
 
-  // WebSocket 연결 함수 (STOMP 구독 로직 포함)
+  // ★ 변경: WebSocket 연결 함수 (STOMP 구독 로직 포함) - 초기 연결 및 사용자/초대 큐 구독만 담당
   const connectWebSocket = useCallback(() => {
-    // 연결 시점에 최신 memberId 값을 ref에서 가져옴
     const currentMemberId = memberIdRef.current;
     if (!currentMemberId) {
         console.warn("Member ID not available yet for WebSocket connection.");
@@ -130,17 +116,7 @@ function HomePage() {
       toast.success('WebSocket (STOMP) 연결 성공!');
       console.log('STOMP Connected:', frame);
 
-      // 기존 구독 해지 (핫 리로딩 등에서 중복 구독 방지)
-      if (stompClient.current.subscriptions) {
-        Object.keys(stompClient.current.subscriptions).forEach(subId => {
-          stompClient.current.unsubscribe(subId);
-        });
-        console.log("Cleared all previous STOMP subscriptions.");
-      }
-
-      // ★★★ 초대 메시지 구독 (새로 추가) ★★★
-      // toMemberId가 현재 로그인한 memberId인 경우에만 메시지를 받음
-      // ★★★ 초대 메시지 구독 로직 수정 ★★★
+      // ★★★ 초대 메시지 구독 ★★★
       const invitePath = `/invite/to/${currentMemberId}`; // /invite/to/{toMemberId}
       stompClient.current.subscribe(invitePath, (message) => {
           const invitation = JSON.parse(message.body);
@@ -151,7 +127,7 @@ function HomePage() {
           const invitedRoom = {
               roomId: invitation.roomPid, // roomPid가 백엔드에서 roomId로 넘어옴
               roomTitle: invitation.roomTitle,
-              roomType: invitation.roomType || 'UNKNOWN', // 백엔드 초대 DTO에 roomType이 없다면 기본값 설정 필요
+              roomType: invitation.roomType || 'MULTI', // 백엔드 초대 DTO에 roomType이 없다면 기본값 설정 필요
           };
 
           // 해당 채팅방이 private인지 multi인지 구분하여 상태 업데이트
@@ -175,7 +151,6 @@ function HomePage() {
                   return updatedRooms;
               });
           } else {
-              // roomType이 정의되지 않았거나 알 수 없는 경우, 기본적으로 multi로 처리 (또는 에러 처리)
               setMultiRooms(prevRooms => {
                   const updatedRooms = [...prevRooms];
                   if (!prevRooms.some(room => String(room.roomId) === String(invitedRoom.roomId))) {
@@ -187,32 +162,7 @@ function HomePage() {
               console.warn("Received invitation without a valid roomType, defaulting to MULTI.");
           }
 
-          // ★★★ 초대받은 채팅방 바로 구독 ★★★
-          const newRoomSubscribePath = `/receive/room/${invitedRoom.roomId}`;
-          // 이미 구독 중인지 확인하는 로직 추가 (중복 구독 방지)
-          if (!stompClient.current.subscriptions[`sub-dynamic-${invitedRoom.roomId}`]) {
-            stompClient.current.subscribe(newRoomSubscribePath, (msg) => {
-              const receivedMessage = JSON.parse(msg.body);
-              console.log(`Received new message for invited room ${invitedRoom.roomId}:`, receivedMessage);
-
-              const parsedMessage = {
-                  ...receivedMessage,
-                  createDateTime: receivedMessage.createDateTime ? new Date(receivedMessage.createDateTime) : new Date(),
-                  createDate: receivedMessage.createDate ? new Date(receivedMessage.createDate) : new Date()
-              };
-
-              if (isChatModalOpenRef.current && currentChatRoomRef.current && String(currentChatRoomRef.current.roomId) === String(invitedRoom.roomId)) {
-                  if (chatModalAddMessageRef.current) {
-                    console.log('초대받은 방에서 현재 열린 모달로 메시지 전달:', parsedMessage.messageContents);
-                    chatModalAddMessageRef.current(parsedMessage);
-                  }
-              } else {
-                  toast.info(`초대된 채팅방(${invitedRoom.roomTitle || invitedRoom.roomId}) 새 메시지: ${parsedMessage.messageContents}`);
-              }
-            }, { id: `sub-dynamic-${invitedRoom.roomId}` }); // 고유한 구독 ID 부여
-            console.log(`Subscribed to new invited room: ${newRoomSubscribePath}`);
-          }
-
+          // ★ 변경: 초대받은 채팅방 구독은 아래의 별도 useEffect가 담당합니다. 여기서는 상태만 업데이트.
       }, { id: `sub-invite-${currentMemberId}` });
       console.log(`Subscribed to invite queue: ${invitePath}`);
 
@@ -223,57 +173,6 @@ function HomePage() {
       }, { id: `sub-user-${currentMemberId}` });
       console.log(`Subscribed to user queue: ${userQueuePath}`);
 
-      // privateRooms 구독
-      privateRoomsRef.current.forEach(room => {
-        const subscribePath = `/receive/room/${room.roomId}`;
-        stompClient.current.subscribe(subscribePath, (message) => {
-          const receivedMessage = JSON.parse(message.body);
-          console.log(`Received private room message for room ${room.roomId}:`, receivedMessage);
-          
-          const parsedMessage = {
-              ...receivedMessage,
-              createDateTime: receivedMessage.createDateTime ? new Date(receivedMessage.createDateTime) : new Date(),
-              createDate: receivedMessage.createDate ? new Date(receivedMessage.createDate) : new Date()
-          };
-
-          if (isChatModalOpenRef.current && currentChatRoomRef.current && String(currentChatRoomRef.current.roomId) === String(room.roomId)) {
-              if (chatModalAddMessageRef.current) {
-                console.log('개인톡에서 현재 열린 모달로 메시지 전달:', parsedMessage.messageContents);
-                chatModalAddMessageRef.current(parsedMessage);
-              }
-          } else {
-              toast.info(`1:1 채팅방(${room.roomTitle || room.roomId}) 새 메시지: ${parsedMessage.messageContents}`);
-          }
-        }, { id: `sub-private-${room.roomId}` });
-        console.log(`Subscribed to private room: ${subscribePath}`);
-      });
-
-      // multiRooms 구독
-      multiRoomsRef.current.forEach(room => {
-        const subscribePath = `/receive/room/${room.roomId}`;
-        stompClient.current.subscribe(subscribePath, (message) => {
-          const receivedMessage = JSON.parse(message.body);
-          console.log(`Received multi room message for room ${room.roomId}:`, receivedMessage);
-
-          const parsedMessage = {
-              ...receivedMessage,
-              createDateTime: receivedMessage.createDateTime ? new Date(receivedMessage.createDateTime) : new Date(),
-              createDate: receivedMessage.createDate ? new Date(receivedMessage.createDate) : new Date()
-          };          
-
-          if (isChatModalOpenRef.current && currentChatRoomRef.current && String(currentChatRoomRef.current.roomId) === String(room.roomId)) {
-              if (chatModalAddMessageRef.current) {
-                console.log('단체톡에서 현재 열린 모달로 메시지 전달:', parsedMessage.messageContents);
-                chatModalAddMessageRef.current(parsedMessage);
-              }
-          } else {
-              toast.info(`단체 채팅방(${room.roomTitle || room.roomId}) 새 메시지: ${parsedMessage.messageContents}`);
-          }
-        }, { id: `sub-multi-${room.roomId}` });
-        console.log(`Subscribed to multi room: ${subscribePath}`);
-      });
-
-
     }, (error) => {
       setIsConnected(false);
       toast.error('WebSocket (STOMP) 연결 오류 발생!');
@@ -281,19 +180,84 @@ function HomePage() {
     });
   }, []); // memberId 대신 memberIdRef.current를 사용하므로 종속성 제거 가능 (useCallback 내부에서 ref 사용)
 
-  const updateChatRoomListsFromLocalStorage = useCallback(() => {
-    const storedPrivateRooms = JSON.parse(localStorage.getItem('privateRooms') || '[]');
-    const storedMultiRooms = JSON.parse(localStorage.getItem('multiRooms') || '[]');
-    setPrivateRooms(storedPrivateRooms);
-    setMultiRooms(storedMultiRooms);
-    console.log("Chat room lists updated from local storage due to invitation.");
-}, []);
+  // ★ 새로 추가: privateRooms 또는 multiRooms 상태가 변경될 때마다 채팅방 구독을 관리하는 useEffect
+  useEffect(() => {
+    // stompClient가 연결되어 있지 않거나 memberId가 없으면 아무것도 하지 않음
+    if (!stompClient.current || !stompClient.current.connected || !memberId) {
+      return;
+    }
+
+    // 현재 활성화된 구독 ID를 추적하기 위한 Set
+    const currentActiveSubscriptions = new Set();
+
+    // 개별 방 구독을 위한 헬퍼 함수
+    const subscribeToRoom = (room, type) => {
+      const subscribePath = `/receive/room/${room.roomId}`;
+      const subscriptionId = `sub-${type}-${room.roomId}`;
+
+      // ★ 수정: stompClient.current.subscriptions가 존재하는지 먼저 확인
+      if (stompClient.current.subscriptions && stompClient.current.subscriptions[subscriptionId]) {
+        currentActiveSubscriptions.add(subscriptionId); // 활성 구독으로 표시
+        return;
+      }
+
+      // 구독 설정
+      stompClient.current.subscribe(subscribePath, (message) => {
+        const receivedMessage = JSON.parse(message.body);
+        console.log(`Received ${type} room message for room ${room.roomId}:`, receivedMessage);
+        
+        const parsedMessage = {
+            ...receivedMessage,
+            createDateTime: receivedMessage.createDateTime ? new Date(receivedMessage.createDateTime) : new Date(),
+            createDate: receivedMessage.createDate ? new Date(receivedMessage.createDate) : new Date()
+        };
+
+        // 현재 ChatRoomModal이 열려 있고, 메시지가 현재 보고 있는 방의 것인지 확인
+        if (isChatModalOpenRef.current && currentChatRoomRef.current && String(currentChatRoomRef.current.roomId) === String(room.roomId)) {
+            if (chatModalAddMessageRef.current) {
+              console.log(`Open modal received message for ${type} room ${room.roomId}:`, parsedMessage.messageContents);
+              chatModalAddMessageRef.current(parsedMessage);
+            }
+        } else {
+            // 모달이 닫혀 있거나 다른 방을 보고 있을 때 토스트 알림
+            toast.info(`${room.roomTitle || room.roomId} (새 메시지): ${parsedMessage.messageContents}`);
+        }
+      }, { id: subscriptionId });
+      console.log(`Subscribed to ${type} room: ${subscribePath} with ID: ${subscriptionId}`);
+      currentActiveSubscriptions.add(subscriptionId);
+    };
+
+    // 모든 privateRooms 구독
+    privateRooms.forEach(room => subscribeToRoom(room, 'private'));
+
+    // 모든 multiRooms 구독
+    multiRooms.forEach(room => subscribeToRoom(room, 'multi'));
+
+    // ★ 수정: 더 이상 목록에 없는 방의 구독 해지 (메모리 누수 방지)
+    // stompClient.current.subscriptions가 존재하는지 먼저 확인
+    if (stompClient.current.subscriptions) {
+      for (const subId in stompClient.current.subscriptions) {
+        // 'sub-private-' 또는 'sub-multi-'로 시작하는 구독 ID만 대상으로 함
+        if ((subId.startsWith('sub-private-') || subId.startsWith('sub-multi-')) && !currentActiveSubscriptions.has(subId)) {
+          console.log(`Unsubscribing from inactive room: ${subId}`);
+          stompClient.current.unsubscribe(subId);
+        }
+      }
+    }
+
+    // 이 useEffect의 cleanup 함수 (컴포넌트 언마운트 시 혹은 의존성 변경 시)
+    return () => {
+      // 전체 웹소켓 연결 해제는 아래의 다른 useEffect에서 담당합니다.
+      // 여기서는 특정 방의 구독을 해제할 필요가 없습니다.
+      // (room 목록이 변경되면 위 로직에서 자동으로 해제됩니다.)
+    };
+  }, [privateRooms, multiRooms, memberId, isConnected]); // privateRooms, multiRooms 상태에 따라 반응
 
   useEffect(() => {
     console.log("WebSocket useEffect triggered. memberId:", memberId, "isConnected:", isConnected);
 
     // memberId가 유효하고, 아직 stompClient가 연결되지 않았을 때만 연결 시도
-    if (memberId && !stompClient.current?.connected) { // ?.connected로 안전하게 접근
+    if (memberId && (!stompClient.current || !stompClient.current.connected)) { // ?.connected로 안전하게 접근
         console.log("Attempting to connect WebSocket as memberId is available and stompClient is not connected.");
         connectWebSocket();
     }
@@ -458,7 +422,7 @@ function HomePage() {
                           toMemberId: Number(toId),
                           roomTitle: response.data.roomTitle // 초대 시 방 제목도 함께 전달하여 수신자가 어떤 방인지 알 수 있도록 함
                       };
-                      // STOMP를 통해 /invite 엔드포인트로 메시지 전송
+                      // STOMP를 통해 /send/invite 엔드포인트로 메시지 전송
                       console.log("stompClient : invite : "+stompClient)
                       stompClient.current.send("/send/invite", {}, JSON.stringify(inviteMessage));
                       console.log(`초대 메시지 전송: roomPid=${roomPid}, from=${fromMemberId}, to=${toId}`);
@@ -537,7 +501,7 @@ function HomePage() {
                         toMemberId: Number(toId),
                         roomTitle: response.data.roomTitle // 초대 시 방 제목도 함께 전달
                     };
-                    // STOMP를 통해 /invite 엔드포인트로 메시지 전송
+                    // STOMP를 통해 /send/invite 엔드포인트로 메시지 전송
                     stompClient.current.send("/send/invite", {}, JSON.stringify(inviteMessage));
                     console.log(`단체 채팅방 초대 메시지 전송: roomPid=${roomPid}, from=${fromMemberId}, to=${toId}`);
                 });
@@ -594,7 +558,7 @@ function HomePage() {
         memberId={memberId}
         memberNick={memberNick}
         stompClient={stompClient.current}
-        chatModalAddMessageRef={chatModalAddMessageRef}
+        chatModalAddMessageRef={chatModalAddMessageRef} // 이 ref를 Modal에 전달
       />
 
       <CreateGroupChatModal isOpen={isCreateGroupChatModalOpen} onClose={handleCloseCreateGroupChatModal} onCreate={handleCreateGroupChat} friends={friendDetails} />
