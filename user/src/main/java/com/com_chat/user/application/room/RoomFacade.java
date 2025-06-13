@@ -29,7 +29,7 @@ public class RoomFacade {
 
         // Define Member
         Long loginMemberId = memberService.findAuthenticationMember().memberId();
-        criteria.memberIds().add(loginMemberId);
+        System.out.println(criteria.memberIds());
 
         DomainMemberDto.MemberNickInfo memberInfo  = memberService.findMemberInfo(criteria.memberIds());
 

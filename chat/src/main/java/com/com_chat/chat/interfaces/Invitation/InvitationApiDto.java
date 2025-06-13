@@ -7,10 +7,11 @@ public record InvitationApiDto() {
     public record InviteRequest(
             Long roomPid,
             Long fromMemberId,
-            Long toMemberId
+            Long toMemberId,
+            String roomTitle
     ){
         public Invitation toDomain(){
-            return new Invitation(roomPid,fromMemberId,toMemberId);
+            return new Invitation(roomPid,fromMemberId,toMemberId,roomTitle);
         }
     }
 }

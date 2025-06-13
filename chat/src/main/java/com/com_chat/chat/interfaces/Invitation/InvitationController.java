@@ -12,6 +12,7 @@ public class InvitationController {
     private final RedisPublisher sendRedis;
     @MessageMapping("/invite")
     public void send(@RequestBody InvitationApiDto.InviteRequest request){
+        System.out.println("INVITE REQUEST : "+request.fromMemberId());
         sendRedis.sendInvitationToClient(request.toDomain());
     }
 }

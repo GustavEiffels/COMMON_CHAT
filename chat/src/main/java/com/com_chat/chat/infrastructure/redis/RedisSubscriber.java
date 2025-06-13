@@ -30,7 +30,7 @@ public class RedisSubscriber {
 
     public void sendInvitationToClient(String message){
         try {
-
+            System.out.println("sendInvitationToClient : "+message);
             Invitation invitation = objectMapper.readValue(message, Invitation.class);
             messageSendingOperations.convertAndSend("/invite/to/"+invitation.toMemberId(),invitation);
 
