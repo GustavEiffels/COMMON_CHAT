@@ -113,6 +113,11 @@ function HomePage() {
         console.log("Cleared all previous STOMP subscriptions.");
       }
 
+      const invitePath = `/invite/to/${storedId}`
+      stompClient.current.subscribe(invitePath,(message)=>{
+        console.log(message)
+      })
+
       const userQueuePath = `/user/queue/messages`;
       stompClient.current.subscribe(userQueuePath, (message) => {
           console.log(`Received private message for user ${memberId}:`, message.body);

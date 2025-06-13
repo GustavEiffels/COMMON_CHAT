@@ -1,5 +1,6 @@
 package com.com_chat.chat.infrastructure.redis;
 
+import com.com_chat.chat.domain.Invitation.Invitation;
 import com.com_chat.chat.domain.message.Message;
 import com.com_chat.chat.domain.message.MessageException;
 import com.com_chat.chat.support.BaseException;
@@ -20,9 +21,18 @@ public class RedisSubscriber {
         try {
 
             Message fromMessage = objectMapper.readValue(message, Message.class);
-            System.out.println("SEND MESSAGE");
-            System.out.println("SEND MESSAGE : "+fromMessage.roomPid());
             messageSendingOperations.convertAndSend("/receive/room/"+fromMessage.roomPid(),fromMessage);
+
+        } catch (JsonProcessingException e) {
+            throw new BaseException(MessageException.MESSAGE_JSON_CONVERT);
+        }
+    }
+
+    public void sendInvitationToClient(String message){
+        try {
+
+            Invitation invitation = objectMapper.readValue(message, Invitation.class);
+            messageSendingOperations.convertAndSend("/invite/to/"+invitation.toMemberId(),invitation);
 
         } catch (JsonProcessingException e) {
             throw new BaseException(MessageException.MESSAGE_JSON_CONVERT);

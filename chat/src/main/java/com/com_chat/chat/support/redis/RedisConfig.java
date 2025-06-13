@@ -28,6 +28,11 @@ public class RedisConfig {
     }
 
     @Bean
+    public ChannelTopic inviteChannel(){
+        return new ChannelTopic("invite");
+    }
+
+    @Bean
     public RedisTemplate<String,String> redisTemplate(RedisConnectionFactory connectionFactory){
         RedisTemplate<String,String> template = new RedisTemplate<>();
         template.setConnectionFactory(connectionFactory);
@@ -48,17 +53,25 @@ public class RedisConfig {
     @Bean
     public RedisMessageListenerContainer redisMessageListenerContainer(
             MessageListenerAdapter chatListenerAdapter,
-            ChannelTopic chatChannelTopic
+            MessageListenerAdapter inviteListenerAdapter,
+            ChannelTopic chattingChannel,
+            ChannelTopic inviteChannel
     ){
         RedisMessageListenerContainer container = new RedisMessageListenerContainer();
         container.setConnectionFactory(redisConnectionFactory());
-        container.addMessageListener(chatListenerAdapter,chatChannelTopic);
+        container.addMessageListener(chatListenerAdapter,chattingChannel);
+        container.addMessageListener(inviteListenerAdapter,inviteChannel);
         return container;
     }
 
     @Bean
     public MessageListenerAdapter chatListenerAdapter(RedisSubscriber subscriber){ 
         return new MessageListenerAdapter(subscriber,"sendMessageToClient");
+    }
+
+    @Bean
+    public MessageListenerAdapter inviteListenerAdapter(RedisSubscriber subscriber){
+        return new MessageListenerAdapter(subscriber,"sendInvitationToClient");
     }
 
 

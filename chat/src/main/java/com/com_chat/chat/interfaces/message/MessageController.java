@@ -18,6 +18,7 @@ public class MessageController {
         messageService.send(request.toCommand());
     }
 
+
     @PostMapping("/message/find")
     public MessageApiDto.FindMessageResponse find(@RequestBody MessageApiDto.FindMessagesRequest request){
         return MessageApiDto.FindMessageResponse.fromInfo(messageService.findMessages(request.toCommand()));

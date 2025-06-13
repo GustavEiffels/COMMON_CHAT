@@ -41,12 +41,4 @@ public record MessageDomainDto() {
 
 
 
-// Invite
-    public record InviteCommand(
-        Long roomPid,
-        Long inviterPid,
-        Long invitedPid
-    ){
-
-    }
 }
