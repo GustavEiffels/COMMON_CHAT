@@ -205,4 +205,26 @@ public record ApiMemberDto() {
         }
     }
 
+
+    public record SearchUserInfoRequest(
+            Long memberId
+    ){
+        public FacadeMemberDto.SearchUserInfoCriteria toCriteria(){
+            return new FacadeMemberDto.SearchUserInfoCriteria(memberId);
+        }
+    }
+
+    public record SearchUserInfoResponse(
+            MemberInfo memberInfo
+    ){
+        public static SearchUserInfoResponse fromResult(FacadeMemberDto.SearchUserInfoInfo info){
+            return new SearchUserInfoResponse(
+                    new MemberInfo(
+                            info.memberInfo().memberId(),
+                            info.memberInfo().nick()
+                    )
+            );
+        }
+    }
+
 }

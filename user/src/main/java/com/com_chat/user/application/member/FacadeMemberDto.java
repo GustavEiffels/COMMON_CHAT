@@ -4,6 +4,7 @@ import com.com_chat.user.domain.chatroom.RoomEnum;
 import com.com_chat.user.domain.member.DomainMemberDto;
 import com.com_chat.user.domain.member.MemberEnum;
 import com.com_chat.user.domain.relationship.RelationshipEnum;
+import com.com_chat.user.interfaces.member.ApiMemberDto;
 import org.springframework.data.domain.Pageable;
 
 import java.util.List;
@@ -164,4 +165,12 @@ public record FacadeMemberDto() {
             );
         }
     }
+
+    public record SearchUserInfoCriteria(
+            Long memberId
+    ){}
+
+    public record SearchUserInfoInfo(
+            FacadeMemberDto.MemberInfo memberInfo
+    ){}
 }

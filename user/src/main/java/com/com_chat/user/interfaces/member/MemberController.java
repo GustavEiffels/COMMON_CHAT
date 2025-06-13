@@ -3,6 +3,7 @@ package com.com_chat.user.interfaces.member;
 import com.com_chat.user.application.member.MemberFacade;
 import com.com_chat.user.support.exceptions.ApiResponse;
 import lombok.RequiredArgsConstructor;
+import nonapi.io.github.classgraph.json.JSONUtils;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
@@ -55,4 +56,15 @@ public class MemberController {
                 )
         );
     }
+
+    @PostMapping("/search/info")
+    public ApiResponse<ApiMemberDto.SearchUserInfoResponse> searchUser(@RequestBody ApiMemberDto.SearchUserInfoRequest request){
+        System.out.println(request.memberId());
+        return ApiResponse.ok(
+                ApiMemberDto.SearchUserInfoResponse.fromResult(
+                        memberFacade.searchUserInfo(request.toCriteria())
+                )
+        );
+    }
+
 }
