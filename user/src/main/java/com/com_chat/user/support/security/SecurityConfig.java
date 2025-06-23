@@ -80,7 +80,7 @@ public class SecurityConfig {
 
         if (authException instanceof BadCredentialsException || authException instanceof AuthenticationServiceException){
             errorCode = "INVALID_CREDENTIALS";
-            errorMessage = "이메일 또는 비밀번호가 일치하지 않습니다."; // 클라이언트에 보여줄 일반적인 메시지
+            errorMessage = "이메일 또는 비밀번호가 일치하지 않습니다.";
         } else {
             errorCode = "AUTHENTICATION_FAILED";
             errorMessage = "인증에 실패했습니다. (계정 상태 확인 또는 토큰 만료)";

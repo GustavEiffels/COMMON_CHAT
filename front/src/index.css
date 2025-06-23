@@ -761,7 +761,6 @@ button:disabled {
 }
 
 
-/* --- 탭 이동 애니메이션 관련 CSS (HomePage.jsx에서 JS로 제어) --- */
 .dashboard-nav .tab-indicator {
   position: absolute;
   bottom: 0;

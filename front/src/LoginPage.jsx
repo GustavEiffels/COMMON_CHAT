@@ -31,12 +31,10 @@ function LoginPage() {
       if (response.status === 200 && response.success) {
         toast.success(response.message || '로그인 성공!');
         
-        // ★★★ 여기를 수정합니다: 모든 LoginResponse 데이터 저장 ★★★
         localStorage.setItem('accessToken', response.data.accessToken);
         localStorage.setItem('refreshToken', response.data.refreshToken);
         localStorage.setItem('memberNick', response.data.nick);
         localStorage.setItem('memberId', response.data.memberId);
-        // JSON.stringify를 사용하여 객체/배열을 문자열로 저장
         localStorage.setItem('privateRooms', JSON.stringify(response.data.privateRoom || []));
         localStorage.setItem('multiRooms', JSON.stringify(response.data.multiRoom || []));
         localStorage.setItem('followList', JSON.stringify(response.data.followList || []));

@@ -91,7 +91,6 @@ public class MemberFacade {
                 memberInfoList);
     }
 
-
     public FacadeMemberDto.SearchUserInfoInfo searchUserInfo(FacadeMemberDto.SearchUserInfoCriteria criteria){
         DomainMemberDto.MemberNickDto userInfo =  memberService.findMemberInfo(criteria.memberId());
         return new FacadeMemberDto.SearchUserInfoInfo(

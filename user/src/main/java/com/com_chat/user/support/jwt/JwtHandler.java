@@ -64,10 +64,31 @@ public class JwtHandler implements InitializingBean {
                     .build()
                     .parseClaimsJws(jwtToken);
             return true;
+        } catch (io.jsonwebtoken.ExpiredJwtException e) {
+            throw new BaseException(JwtException.JWT_EXPIRE_EXCEPTION);
+        } catch (io.jsonwebtoken.SignatureException e) {
+            throw new BaseException(JwtException.JWT_SIGNATURE_EXCEPTION);
+        } catch (io.jsonwebtoken.MalformedJwtException e) {
+            throw new BaseException(JwtException.JWT_INVALID_EXCEPTION);
+        } catch (IllegalArgumentException e) {
+            throw new BaseException(JwtException.JWT_INVALID_EXCEPTION);
         } catch (Exception e) {
-            return false;
+            throw new BaseException(JwtException.JWT_EXCEPTION);
         }
     }
 
+    public boolean expireToken(String token){
+        try {
+            String jwtToken = token.replace("Bearer ", "");
+            Jwts.parserBuilder()
+                    .setSigningKey(key)
+                    .build()
+                    .parseClaimsJws(jwtToken);
+            return true;
+        }
+        catch (io.jsonwebtoken.ExpiredJwtException e){
+            return false;
+        }
+    }
 
 }
