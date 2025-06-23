@@ -1,8 +1,6 @@
 package com.com_chat.user.support.jwt;
 
-import com.com_chat.user.support.exceptions.ApiResponse;
 import com.com_chat.user.support.exceptions.BaseException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -39,14 +37,12 @@ public class JwtFilter extends OncePerRequestFilter {
         String requestUri = request.getRequestURI();
         String requestMethod = request.getMethod();
 
-        // Handle OPTIONS requests (pre-flight for CORS)
         if (requestMethod.equals(HttpMethod.OPTIONS.name())) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        boolean isPublicPath = PUBLIC_PATHS.stream()
-                .anyMatch(path -> requestUri.equals(path) || requestUri.startsWith(path + "/"));
+        boolean isPublicPath = PUBLIC_PATHS.stream().anyMatch(requestUri::equals);
 
         if (isPublicPath) {
             filterChain.doFilter(request, response);
@@ -57,6 +53,7 @@ public class JwtFilter extends OncePerRequestFilter {
 
         if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
             String accessToken = authorizationHeader.substring(7);
+            System.out.println("accessToken : "+accessToken);
 
             try {
                 handler.validateToken(accessToken);
@@ -67,7 +64,7 @@ public class JwtFilter extends OncePerRequestFilter {
                 SecurityContextHolder.getContext().setAuthentication(authenticationToken);
 
             } catch (BaseException e) {
-                response.setContentType("application/json");
+                response.setContentType("application/json;charset=UTF-8");
 
                 String errorCode;
                 String errorMessage;
@@ -92,6 +89,7 @@ public class JwtFilter extends OncePerRequestFilter {
                     errorCode = e.getCode();
                     errorMessage = e.getMessage();
                 }
+                System.out.println("errorMessage : "+errorMessage);
                 String jsonResponse = String.format(
                         "{\"status\": %d, \"data\": null, \"error\": {\"errorCode\": \"%s\", \"message\": \"%s\"}}",
                         httpStatus.value(),
@@ -99,13 +97,14 @@ public class JwtFilter extends OncePerRequestFilter {
                         escapeJson(errorMessage)
                 );
 
+
                 response.setStatus(httpStatus.value());
                 response.getWriter().write(jsonResponse);
                 return;
             }
         } else {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.setContentType("application/json");
+            response.setContentType("application/json;charset=UTF-8");
 
             String errorCode = "AUTH_ERROR_MISSING_OR_MALFORMED";
             String errorMessage = "Authorization header missing or malformed";
