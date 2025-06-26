@@ -140,9 +140,6 @@ public class MemberService {
         }
 
         // Generate New Access Token
-        String refreshToken = jwtHandler.createAccessToken(memberId);
-        repository.save( findMember.refresh(refreshToken) );
-
         return new DomainMemberDto.ReissueInfo(jwtHandler.createAccessToken(memberId));
     }
 
