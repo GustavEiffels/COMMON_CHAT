@@ -25,7 +25,8 @@ public class JwtFilter extends OncePerRequestFilter {
 
     private static final List<String> PUBLIC_PATHS = Arrays.asList(
             "/members/login",
-            "/members"
+            "/members",
+            "/members/reissue"
     );
     @Override
     protected void doFilterInternal(

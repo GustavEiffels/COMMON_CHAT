@@ -12,7 +12,7 @@ services:
     ports:
       - "33066:3306"
     volumes:
-      - ./data:/var/lib/mysql
+      - mysql_data:/var/lib/mysql  
 
   mongodb:
     image: mongo:7.0
@@ -36,3 +36,4 @@ services:
 
 volumes:
   mongo_data:
+  mysql_data:

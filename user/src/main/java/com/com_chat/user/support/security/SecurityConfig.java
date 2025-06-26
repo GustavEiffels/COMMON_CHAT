@@ -56,7 +56,7 @@ public class SecurityConfig {
                                 auth.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                                         .requestMatchers(HttpMethod.POST,"/members", "/members/login").permitAll()
                                         .requestMatchers(HttpMethod.POST,"/members/search/**").permitAll()
-//                                        .requestMatchers(HttpMethod.GET,"/members/search/**").permitAll()
+                                        .requestMatchers(HttpMethod.POST,"/members/reissue").permitAll()
                                         .anyRequest().authenticated())
                 .exceptionHandling(
                         exceptionHandling -> exceptionHandling

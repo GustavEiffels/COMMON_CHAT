@@ -1,8 +1,9 @@
 // src/api.js
+
 const API_BASE_URL = 'http://localhost:8080';
 
 const api = {
-  // 로그인 API 호출
+  // ... (로그인, 회원가입 함수는 변경 없음) ...
   login: async (email, password) => {
     try {
       const response = await fetch(`${API_BASE_URL}/members/login`, {
@@ -13,10 +14,17 @@ const api = {
         body: JSON.stringify({ email, password }),
       });
 
-      const data = await response.json(); 
-      console.log(data)
+      const data = await response.json();
+      console.log('Login API 응답:', data);
 
       if (response.ok && data.status === 200 && !data.error) {
+        if (data.data.accessToken && data.data.refreshToken) {
+          localStorage.setItem('accessToken', data.data.accessToken);
+          localStorage.setItem('refreshToken', data.data.refreshToken);
+        } else {
+          console.warn('Login API 응답에 accessToken 또는 refreshToken이 없습니다.', data.data);
+        }
+
         return { success: true, message: data.message || '로그인 성공!', data: data.data, status: data.status };
       } else {
         const errorMessage = data.error ? data.error.message : (data.message || '로그인 실패: 알 수 없는 오류');
@@ -24,11 +32,10 @@ const api = {
       }
     } catch (error) {
       console.error('API Error during login:', error);
-      return { success: false, message: '네트워크 오류 또는 서버에 연결할 수 없습니다.', status: 0 }; 
+      return { success: false, message: '네트워크 오류 또는 서버에 연결할 수 없습니다.', status: 0 };
     }
   },
 
-  // 회원가입 API 호출
   signup: async (nick, email, password, profilePath = '') => {
     try {
       const response = await fetch(`${API_BASE_URL}/members`, {
@@ -40,6 +47,7 @@ const api = {
       });
 
       const data = await response.json();
+      console.log('Signup API 응답:', data);
 
       if (response.ok && data.status === 200 && !data.error) {
         return { success: true, message: data.message || '회원가입 성공!', data: data.data, status: data.status };
@@ -52,231 +60,176 @@ const api = {
       return { success: false, message: '네트워크 오류 또는 서버에 연결할 수 없습니다.', status: 0 };
     }
   },
-    searchMembers: async (query, type = 'nick', page = 0, size = 10) => {
+
+  reissueAccessToken: async () => {
     try {
-      // URL 쿼리 파라미터로 page와 size를 전달합니다.
-      const response = await fetch(`${API_BASE_URL}/members/search/${type}/${query}?page=${page}&size=${size}`, {
-        method: 'GET',
+      const refreshToken = localStorage.getItem('refreshToken');
+
+      console.log('refreshToken : '+refreshToken)
+      if (!refreshToken) {
+        console.error('Refresh Token이 없습니다. 로그인 상태가 아닙니다.');
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        alert('로그인 세션이 만료되었습니다. 다시 로그인해주세요.');
+        window.location.href = '/login';
+        return { success: false, message: 'Refresh Token이 없어 토큰 재발급 실패' };
+      }
+
+      console.log('Refresh Token 재발급 시도 중...');
+
+      const response = await fetch(`${API_BASE_URL}/members/reissue`, {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          // 인증이 필요한 API라면 JWT 토큰을 포함해야 합니다.
-          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
         },
+        body: JSON.stringify({ refreshToken: refreshToken }),
       });
 
-      const data = await response.json(); 
-
-      console.log('API Response data:', data);
+      const data = await response.json();
+      console.log('재발급 응답:', data);
 
       if (response.ok && data.status === 200 && !data.error) {
-        return { success: true, message: data.message || '검색 성공!', data: data.data };
+        localStorage.setItem('accessToken', data.data.newAccessToken);
+        console.log('Access Token 재발급 성공!');
+        return { success: true, newAccessToken: data.data.newAccessToken };
       } else {
-        const errorMessage = data.error ? data.error.message : (data.message || '검색 실패: 알 수 없는 오류');
+        const errorMessage = data.error ? data.error.message : (data.message || 'Refresh Token 재발급 실패: 알 수 없는 오류');
+        console.error('Refresh Token 재발급 실패:', errorMessage);
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        alert('세션이 만료되었습니다. 다시 로그인해주세요.');
+        window.location.href = '/login';
         return { success: false, message: errorMessage };
       }
     } catch (error) {
-      console.error('API Error during searchMembers:', error);
-      return { success: false, message: '네트워크 오류 또는 서버에 연결할 수 없습니다.' };
+      console.error('API Error during reissueAccessToken:', error);
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
+      alert('네트워크 오류 또는 서버에 연결할 수 없습니다. 다시 로그인해주세요.');
+      window.location.href = '/login';
+      return { success: false, message: error.message || '네트워크 오류 또는 서버에 연결할 수 없습니다.' };
     }
   },
+
+  // 모든 API 요청을 처리할 범용 래퍼 함수 (인터셉터 역할)
+  authenticatedRequest: async function(url, options = {}) {
+    let accessToken = localStorage.getItem('accessToken');
+    const originalHeaders = options.headers || {};
+
+    // 첫 번째 시도 (기존 Access Token 사용)
+    options.headers = {
+      ...originalHeaders,
+      'Content-Type': 'application/json',
+      ...(accessToken ? { 'Authorization': `Bearer ${accessToken}` } : {})
+    };
+
+    try {
+      const response = await fetch(url, options);
+      const data = await response.json().catch(() => ({}));
+
+      // 401 에러, 특히 JWT 만료 메시지 확인
+      if (response.status === 401 && data.error?.errorCode === "JWT_EXPIRE_EXCEPTION") {
+        console.warn('Access Token 만료 감지, Refresh Token으로 재발급 시도 중...');
+        const reissueResult = await this.reissueAccessToken(); // api.reissueAccessToken 호출
+
+        if (reissueResult.success) {
+          // 재발급 성공 시, 새로운 Access Token으로 헤더 갱신하고 재시도
+          accessToken = reissueResult.newAccessToken;
+          options.headers = {
+            ...originalHeaders,
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${accessToken}` // 새로운 토큰으로 업데이트
+          };
+
+          console.log('새로운 Access Token으로 요청 재시도 중...');
+          const retryResponse = await fetch(url, options);
+          const retryData = await retryResponse.json().catch(() => ({}));
+
+          if (retryResponse.ok && retryData.status === 200 && !retryData.error) {
+            return { success: true, message: retryData.message, data: retryData.data, status: retryData.status };
+          } else {
+            // 재시도 실패 시 (Refresh Token이 재발급은 되었으나 원래 요청이 실패한 경우 등)
+            console.error('재시도 요청 실패:', retryData.error?.message || retryData.message || '알 수 없는 오류');
+            return { success: false, message: retryData.error ? retryData.error.message : (retryData.message || '재시도 요청 실패: 알 수 없는 오류'), status: retryData.status, data: retryData.data };
+          }
+        } else {
+          // Refresh Token 재발급 실패 시 (reissueAccessToken 함수에서 이미 로그인 페이지로 리다이렉트 처리됨)
+          return { success: false, message: reissueResult.message, status: data.status };
+        }
+      }
+
+      // 401 에러이지만 JWT 만료가 아닌 다른 인증 오류
+      if (response.status === 401) {
+           console.error('인증 오류 (401):', data.error?.message || data.message || '알 수 없는 인증 오류');
+           localStorage.removeItem('accessToken');
+           localStorage.removeItem('refreshToken');
+           alert('인증 정보가 유효하지 않습니다. 다시 로그인해주세요.');
+           window.location.href = '/login';
+           return { success: false, message: data.error?.message || data.message || '인증 정보가 유효하지 않습니다.', status: 401 };
+      }
+
+      // 성공 또는 다른 종류의 에러 처리 (200 OK, 400 Bad Request, 500 Internal Server Error 등)
+      if (response.ok && data.status === 200 && !data.error) {
+        return { success: true, message: data.message, data: data.data, status: data.status };
+      } else {
+        return { success: false, message: data.error ? data.error.message : (data.message || 'API 오류: 알 수 없는 오류'), status: data.status, data: data.data };
+      }
+
+    } catch (error) {
+      console.error('API Error during authenticatedRequest:', error);
+      return { success: false, message: error.message || '네트워크 오류 또는 서버에 연결할 수 없습니다.', status: 0 };
+    }
+  },
+
+  // ... (이하 모든 인증이 필요한 API 호출은 `api.authenticatedRequest`로 변경됨) ...
+
+  searchMembers: async (query, type = 'nick', page = 0, size = 10) => {
+    return api.authenticatedRequest(
+      `${API_BASE_URL}/members/search/${type}/${query}?page=${page}&size=${size}`,
+      { method: 'GET' }
+    );
+  },
+
   addFriend: async (toMemberId) => {
-    try {
-      const accessToken = localStorage.getItem('accessToken');
-      if (!accessToken) {
-        throw new Error('로그인 토큰이 없습니다. 다시 로그인해주세요.');
-      }
-
-      const response = await fetch(`${API_BASE_URL}/relationships/follow`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${accessToken}`
-        },
-        body: JSON.stringify({ toMemberId }), // toMemberId를 요청 본문에 포함
-      });
-
-      const data = await response.json();
-
-      if (response.ok && data.status === 200 && !data.error) {
-        return { success: true, message: data.message || '친구 추가 성공!', data: data.data };
-      } else {
-        const errorMessage = data.error ? data.error.message : (data.message || '친구 추가 실패: 알 수 없는 오류');
-        return { success: false, message: errorMessage };
-      }
-    } catch (error) {
-      console.error('API Error during addFriend:', error);
-      return { success: false, message: error.message || '네트워크 오류 또는 서버에 연결할 수 없습니다.' };
-    }
-  },
-   blockMember: async (toMemberId) => {
-    try {
-      const accessToken = localStorage.getItem('accessToken');
-      if (!accessToken) {
-        throw new Error('로그인 토큰이 없습니다. 다시 로그인해주세요.');
-      }
-
-      const response = await fetch(`${API_BASE_URL}/relationships/block`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${accessToken}`
-        },
-        body: JSON.stringify({ toMemberId }), // toMemberId를 요청 본문에 포함
-      });
-
-      const data = await response.json();
-
-      if (response.ok && data.status === 200 && !data.error) {
-        return { success: true, message: data.message || '회원 차단 성공!', data: data.data };
-      } else {
-        const errorMessage = data.error ? data.error.message : (data.message || '회원 차단 실패: 알 수 없는 오류');
-        return { success: false, message: errorMessage };
-      }
-    } catch (error) {
-      console.error('API Error during blockMember:', error);
-      return { success: false, message: error.message || '네트워크 오류 또는 서버에 연결할 수 없습니다.' };
-    }
+    return api.authenticatedRequest(
+      `${API_BASE_URL}/relationships/follow`,
+      { method: 'POST', body: JSON.stringify({ toMemberId }) }
+    );
   },
 
-  // ★★★ 친구 해제 API 호출 ★★★
+  blockMember: async (toMemberId) => {
+    return api.authenticatedRequest(
+      `${API_BASE_URL}/relationships/block`,
+      { method: 'POST', body: JSON.stringify({ toMemberId }) }
+    );
+  },
+
   unfollow: async (relationshipId) => {
-    try {
-      const accessToken = localStorage.getItem('accessToken');
-      if (!accessToken) {
-        throw new Error('로그인 토큰이 없습니다. 다시 로그인해주세요.');
-      }
-
-      const response = await fetch(`${API_BASE_URL}/relationships/unfollow`, {
-        method: 'POST', // 백엔드 @PostMapping에 맞춤
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${accessToken}`
-        },
-        body: JSON.stringify({ relationshipId }), // toMemberId를 요청 본문에 포함
-      });
-
-      const data = await response.json(); // ApiResponse<Void> 형태도 파싱 가능
-
-      if (response.ok && data.status === 200 && !data.error) {
-        return { success: true, message: data.message || '친구 관계 해제 성공!' };
-      } else {
-        const errorMessage = data.error ? data.error.message : (data.message || '친구 관계 해제 실패: 알 수 없는 오류');
-        return { success: false, message: errorMessage };
-      }
-    } catch (error) {
-      console.error('API Error during unfollow:', error);
-      return { success: false, message: error.message || '네트워크 오류 또는 서버에 연결할 수 없습니다.' };
-    }
+    return api.authenticatedRequest(
+      `${API_BASE_URL}/relationships/unfollow`,
+      { method: 'POST', body: JSON.stringify({ relationshipId }) }
+    );
   },
 
-  // ★★★ 차단 해제 API 호출 ★★★
   unblock: async (relationshipId) => {
-    try {
-      const accessToken = localStorage.getItem('accessToken');
-      if (!accessToken) {
-        throw new Error('로그인 토큰이 없습니다. 다시 로그인해주세요.');
-      }
-
-      const response = await fetch(`${API_BASE_URL}/relationships/unblock`, {
-        method: 'POST', // 백엔드 @PostMapping에 맞춤
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${accessToken}`
-        },
-        body: JSON.stringify({ relationshipId }), // toMemberId를 요청 본문에 포함
-      }
-      );
-
-      const data = await response.json();
-
-      if (response.ok && data.status === 200 && !data.error) {
-        return { success: true, message: data.message || '차단 해제 성공!' };
-      } else {
-        const errorMessage = data.error ? data.error.message : (data.message || '차단 해제 실패: 알 수 없는 오류');
-        return { success: false, message: errorMessage };
-      }
-    } catch (error) {
-      console.error('API Error during unblock:', error);
-      return { success: false, message: error.message || '네트워크 오류 또는 서버에 연결할 수 없습니다.' };
-    }
+    return api.authenticatedRequest(
+      `${API_BASE_URL}/relationships/unblock`,
+      { method: 'POST', body: JSON.stringify({ relationshipId }) }
+    );
   },
 
   createChatRoom: async (memberIds, type, title) => {
-    try {
-      const accessToken = localStorage.getItem('accessToken');
-      if (!accessToken) {
-        throw new Error('로그인 토큰이 없습니다. 다시 로그인해주세요.');
-      }
-
-      console.log('멤버 아이디들 : ',memberIds)
-      console.log('memberIds : ',title)
-
-
-      const response = await fetch(`${API_BASE_URL}/rooms`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${accessToken}`
-        },
-        body: JSON.stringify({ memberIds, type, title}),
-      });
-
-      const data = await response.json(); 
-
-
-      if (response.ok && data.status === 200 && !data.error) {
-        return { success: true, message: data.message || '채팅방 생성 성공!', data: data.data };
-      } else {
-        const errorMessage = data.error ? data.error.message : (data.message || '채팅방 생성 실패: 알 수 없는 오류');
-        return { success: false, message: errorMessage };
-      }
-    } catch (error) {
-      console.error('API Error during createChatRoom:', error);
-      return { success: false, message: error.message || '네트워크 오류 또는 서버에 연결할 수 없습니다.' };
-    }
+    return api.authenticatedRequest(
+      `${API_BASE_URL}/rooms`,
+      { method: 'POST', body: JSON.stringify({ memberIds, type, title }) }
+    );
   },
-   /**
-   * 채팅방 초대 API 호출
-   * @param {number} roomPid - 초대할 채팅방의 고유 ID (Long 타입)
-   * @param {number} fromMemberId - 초대를 보내는 회원의 ID (Long 타입)
-   * @param {number} toMemberId - 초대를 받을 회원의 ID (Long 타입)
-   * @returns {Promise<object>} - 성공 여부, 메시지, 데이터 포함 객체
-   */
+
   invite: async (roomPid, fromMemberId, toMemberId) => {
-    try {
-      const accessToken = localStorage.getItem('accessToken');
-      if (!accessToken) {
-        throw new Error('로그인 토큰이 없습니다. 다시 로그인해주세요.');
-      }
-
-      // 중요: 백엔드 @MessageMapping("/invite")는 일반적으로 웹소켓(STOMP)을 통해 호출됩니다.
-      // 여기서는 RESTful API 호출로 가정하고 구현합니다.
-      // 만약 백엔드가 순수 웹소켓 STOMP 메시지 브로커만을 사용한다면
-      // 이 fetch 코드는 작동하지 않고, 별도의 웹소켓 클라이언트(Stomp.js 등)를 사용해야 합니다.
-      // 하지만, 웹소켓 메시지 전송을 트리거하는 REST API를 백엔드에 두는 경우도 있습니다.
-
-      const response = await fetch(`${API_BASE_URL}/invite`, { // 초대 관련 REST 엔드포인트
-        method: 'POST', // HTTP POST 요청
-        headers: {
-          'Content-Type': 'application/json', // JSON 형식으로 데이터 전송
-        },
-        body: JSON.stringify({ roomPid, fromMemberId, toMemberId }), // 요청 본문에 데이터 포함
-      });
-
-      const data = await response.json(); // 서버 응답을 JSON 형태로 파싱
-
-      // 서버 응답이 성공(HTTP 200 OK)이고, 백엔드 로직상으로도 성공이며, 에러가 없는 경우
-      if (response.ok && data.status === 200 && !data.error) {
-        return { success: true, message: data.message || '초대 전송 성공!', data: data.data };
-      } else {
-        // 서버에서 비즈니스 로직 오류 또는 다른 상태 코드를 줄 경우
-        const errorMessage = data.error ? data.error.message : (data.message || '초대 전송 실패: 알 수 없는 오류');
-        return { success: false, message: errorMessage };
-      }
-    } catch (error) {
-      console.error('API 오류 (invite):', error);
-      return { success: false, message: error.message || '네트워크 오류 또는 서버에 연결할 수 없습니다.' };
-    }
+    return api.authenticatedRequest(
+      `${API_BASE_URL}/invite`,
+      { method: 'POST', body: JSON.stringify({ roomPid, fromMemberId, toMemberId }) }
+    );
   }
 };
 

@@ -2,13 +2,11 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { toast } from 'react-toastify';
 import './ChatRoomModal.css';
+import api from '../../api';
 
-// 채팅 API의 기본 URL을 직접 정의합니다. (localhost:8888)
 const CHAT_API_BASE_URL = 'http://localhost:8888';
-// 회원 API의 기본 URL 정의 (localhost:8080) - 닉네임 조회를 위한 백엔드 API
 const MEMBER_API_BASE_URL = 'http://localhost:8080'; 
 
-// MessageEnum.LoadType을 프론트엔드에서 정의
 const MessageLoadType = {
   FIRST: 'FIRST',     // 초기 로딩 (가장 최신 메시지들)
   NOT_FIRST: 'NOT_FIRST', // 이전 메시지 로딩 (스크롤 올릴 때)
@@ -49,42 +47,47 @@ function ChatRoomModal({ isOpen, onClose, room, memberId, memberNick, stompClien
   // --- 유틸리티 함수: 닉네임 조회 및 저장 ---
   // 특정 memberId의 닉네임을 백엔드에서 조회하고, 로컬 상태(memberInfoMap) 및 localStorage에 저장하는 함수
   const fetchAndStoreMemberNick = useCallback(async (targetMemberId) => {
-    // 닉네임이 없거나 이미 Map에 존재하면 불필요한 API 호출을 방지하기 위해 즉시 반환
-    if (!targetMemberId || memberInfoMap.has(targetMemberId) || targetMemberId == memberId) {
-      return;
-    }
+  // 닉네임이 없거나 이미 Map에 존재하면 불필요한 API 호출을 방지하기 위해 즉시 반환
+  // targetMemberId == memberId 조건은 현재 로그인된 사용자의 닉네임을 다시 가져오지 않기 위함
+  if (!targetMemberId || memberInfoMap.has(targetMemberId) || targetMemberId == memberId) {
+    console.log(`Skipping fetch for memberId ${targetMemberId}: already in map, null, or is current user.`);
+    return;
+  }
 
+  try {
+    console.log(`Fetching nick for memberId: ${targetMemberId} using authenticatedRequest.`);
 
-    try {
-      console.log(`Fetching nick for memberId: ${targetMemberId} from ${MEMBER_API_BASE_URL}/members/search/info`);
-      const response = await fetch(`${MEMBER_API_BASE_URL}/members/search/info`, {
+    // api.authenticatedRequest를 사용하여 API 호출
+    // 이 함수가 내부적으로 Authorization 헤더를 관리하고 토큰 만료 시 재발급 로직을 수행합니다.
+    const result = await api.authenticatedRequest(
+      `${MEMBER_API_BASE_URL}/members/search/info`,
+      {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify({ memberId: targetMemberId }),
-      });
-
-      const data = await response.json(); // 응답을 JSON 형태로 파싱
-      console.log(data)
-
-      // 백엔드 응답 구조: { "success": true, "data": { "memberInfo": { "memberId": 123, "nick": "닉네임" } } }
-      if (response.ok && data.data && data.data.memberInfo && data.data.memberInfo.nick) {
-        const fetchedNick = data.data.memberInfo.nick;
-        // setMemberInfoMap을 사용하여 기존 Map을 복사하고 새 닉네임을 추가/업데이트
-        setMemberInfoMap(prevMap => {
-          const newMap = new Map(prevMap); // 기존 Map을 복사하여 새 Map 생성
-          newMap.set(targetMemberId, fetchedNick); // 새 닉네임 추가 또는 업데이트
-          return newMap; // 새로운 Map을 반환하여 상태 업데이트 트리거
-        });
-        console.log(`Fetched and stored nick for memberId ${targetMemberId}: ${fetchedNick}`);
-      } else {
-        console.warn(`Failed to fetch nick for memberId ${targetMemberId}:`, data.message || 'Unknown error or no member info found');
       }
-    } catch (error) {
-      console.error(`Network error while fetching nick for memberId ${targetMemberId}:`, error);
+    );
+
+    console.log('API Response data:', result);
+
+    // api.authenticatedRequest의 반환 값은 { success, message, data, status } 형식입니다.
+    if (result.success && result.data && result.data.memberInfo && result.data.memberInfo.nick) {
+      const fetchedNick = result.data.memberInfo.nick;
+      // setMemberInfoMap을 사용하여 기존 Map을 복사하고 새 닉네임을 추가/업데이트
+      setMemberInfoMap(prevMap => {
+        const newMap = new Map(prevMap); // 기존 Map을 복사하여 새 Map 생성
+        newMap.set(targetMemberId, fetchedNick); // 새 닉네임 추가 또는 업데이트
+        return newMap; // 새로운 Map을 반환하여 상태 업데이트 트리거
+      });
+      console.log(`Fetched and stored nick for memberId ${targetMemberId}: ${fetchedNick}`);
+    } else {
+      // API 호출은 성공했지만 (result.success가 true), 데이터가 없거나 에러 메시지가 있는 경우
+      // 또는 api.authenticatedRequest 자체에서 인증 실패 등으로 success가 false인 경우
+      console.warn(`Failed to fetch nick for memberId ${targetMemberId}:`, result.message || 'Unknown error or no member info found');
     }
-  }, [memberInfoMap]); // memberInfoMap이 변경될 때마다 이 함수도 재생성되어 최신 Map을 참조하도록 함
+  } catch (error) {
+    console.error(`Network error while fetching nick for memberId ${targetMemberId}:`, error);
+  }
+}, [memberInfoMap, memberId]);
 
   // --- 실시간 메시지 추가 함수 ---
   // HomePage로부터 STOMP로 수신된 새 메시지를 messages 상태에 추가하는 함수
