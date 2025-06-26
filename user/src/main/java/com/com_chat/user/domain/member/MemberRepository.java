@@ -13,6 +13,8 @@ public interface MemberRepository {
 
     Optional<Member> findByNick(String nick);
 
+    Optional<Member> findByRefresh(String refreshToken);
+
     Optional<Member> findByEmail(String email);
 
     Optional<Member> find(Long memberId);

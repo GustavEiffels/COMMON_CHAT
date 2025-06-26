@@ -173,5 +173,13 @@ public record DomainMemberDto() {
     public record AuthenticationInfo(Long memberId){}
 
 
+// REISSUE
+    public record ReissueCommand( String refreshToken)
+    {}
+
+    public record ReissueInfo( String newAccessToken )
+    {}
+
+
 
 }

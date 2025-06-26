@@ -16,6 +16,7 @@ public enum MemberException implements ExceptionInterface {
     ALREADY_EXIST_NICK("ALREADY_EXIST_NAME","이미 사용중인 닉네임 입니다."),
     ALREADY_EMAIL_NICK("ALREADY_EMAIL_NICK","이미 사용중인 이메일 입니다."),
     NOT_FOUND_USER("NOT_FOUND_USER","사용자를 찾을 수 없습니다."),
+    NOT_MATCHED_USER("NOT_MATCHED_USER","사용자 정보가 일치하지 않습니다."),
     NOT_EXIST("NOT_EXIST","사용자 정보를 찾을 수 없습니다."),
     BAD_CREDENTIAL("BAD_CREDENTIAL","비밀번호가 일치하지 않습니다."),
     NOT_AUTHENTICATION_MEMBER("NOT_AUTHENTICATION_MEMBER","검증된 사용자가 아닙니다.")

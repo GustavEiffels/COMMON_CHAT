@@ -61,4 +61,6 @@ public class MemberRepositoryCustomImpl implements MemberRepositoryCustom{
     private BooleanExpression likeNick(String query){
         return hasText(query) ? memberEntity.nick.containsIgnoreCase(query) : null;
     }
+
+
 }

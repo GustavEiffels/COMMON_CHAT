@@ -4,6 +4,7 @@ import com.com_chat.user.domain.member.Member;
 import com.com_chat.user.domain.member.MemberEnum;
 import com.com_chat.user.domain.member.MemberRepository;
 import com.com_chat.user.infrastructure.member.entity.MemberEntity;
+import jakarta.annotation.Nullable;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -31,6 +32,11 @@ public class  MemberRepositoryImpl implements MemberRepository {
     @Override
     public Optional<Member> findByNick(String nick) {
         return jpaRepository.findByNick(nick);
+    }
+
+    @Override
+    public Optional<Member> findByRefresh(String refreshToken) {
+        return jpaRepository.findByRefreshToken(refreshToken).map(MemberEntity::toDomain);
     }
 
     @Override

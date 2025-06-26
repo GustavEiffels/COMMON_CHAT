@@ -90,7 +90,7 @@ public class MemberService {
         Member member = userDetails.getMemberEntity().toDomain();
 
         String accessToken  = jwtHandler.createAccessToken(member.memberId());
-        String refreshToken = jwtHandler.createRefreshToken();
+        String refreshToken = jwtHandler.createRefreshToken(member.memberId());
         repository.save(member.refresh(refreshToken));
 
         return new DomainMemberDto.LoginInfo(member.memberId(),accessToken,refreshToken,member.nick());
@@ -122,6 +122,28 @@ public class MemberService {
             return new DomainMemberDto.AuthenticationInfo((Long) authentication.getPrincipal());
         }
         throw new BaseException(MemberException.NOT_AUTHENTICATION_MEMBER);
+    }
+
+// REISSUE
+    public DomainMemberDto.ReissueInfo reissue(DomainMemberDto.ReissueCommand command){
+
+        // Member Id from Refresh Token
+        Long memberId = jwtHandler.getMemberId(command.refreshToken());
+
+        // Find Member By Refresh Token
+        Member findMember = repository.findByRefresh(command.refreshToken())
+                .orElseThrow(()->new BaseException(MemberException.NOT_EXIST));
+
+        // Compare With Id
+        if( !findMember.memberId().equals(memberId) ){
+            throw new BaseException(MemberException.NOT_MATCHED_USER);
+        }
+
+        // Generate New Access Token
+        String refreshToken = jwtHandler.createAccessToken(memberId);
+        repository.save( findMember.refresh(refreshToken) );
+
+        return new DomainMemberDto.ReissueInfo(jwtHandler.createAccessToken(memberId));
     }
 
 }

@@ -27,14 +27,16 @@ public class JwtHandler implements InitializingBean {
     }
 
     public String createAccessToken(Long memberId){
-        return Jwts.builder().setSubject(memberId.toString())
+        return Jwts.builder()
+                .setSubject(memberId.toString())
                 .signWith(key, SignatureAlgorithm.HS512)
                 .setExpiration(new Date(new Date().getTime()+properties.getAccess_time()))
                 .compact();
     }
 
-    public String createRefreshToken(){
+    public String createRefreshToken(Long memberId){
         return Jwts.builder()
+                .setSubject(memberId.toString())
                 .signWith(key, SignatureAlgorithm.HS512)
                 .setExpiration(new Date(new Date().getTime()+properties.getRefresh_time()))
                 .compact();
@@ -76,19 +78,4 @@ public class JwtHandler implements InitializingBean {
             throw new BaseException(JwtException.JWT_EXCEPTION);
         }
     }
-
-    public boolean expireToken(String token){
-        try {
-            String jwtToken = token.replace("Bearer ", "");
-            Jwts.parserBuilder()
-                    .setSigningKey(key)
-                    .build()
-                    .parseClaimsJws(jwtToken);
-            return true;
-        }
-        catch (io.jsonwebtoken.ExpiredJwtException e){
-            return false;
-        }
-    }
-
 }

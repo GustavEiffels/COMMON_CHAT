@@ -227,4 +227,16 @@ public record ApiMemberDto() {
         }
     }
 
+    public record ReissueRequest(String refreshToken){
+        public DomainMemberDto.ReissueCommand toCommand(){
+            return new DomainMemberDto.ReissueCommand(refreshToken);
+        }
+    }
+
+    public record ReissueResponse(String newAccessToken){
+        public static ReissueResponse fromInfo(DomainMemberDto.ReissueInfo reissueInfo){
+            return new ReissueResponse(reissueInfo.newAccessToken());
+        }
+    }
+
 }

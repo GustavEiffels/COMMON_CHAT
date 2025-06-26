@@ -1,6 +1,7 @@
 package com.com_chat.user.interfaces.member;
 
 import com.com_chat.user.application.member.MemberFacade;
+import com.com_chat.user.domain.member.MemberService;
 import com.com_chat.user.support.exceptions.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import nonapi.io.github.classgraph.json.JSONUtils;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 public class MemberController {
 
     private final MemberFacade memberFacade;
+    private final MemberService memberService;
 
 
     @PostMapping("")
@@ -65,6 +67,11 @@ public class MemberController {
                         memberFacade.searchUserInfo(request.toCriteria())
                 )
         );
+    }
+
+    @PostMapping("/reissue")
+    public ApiResponse<ApiMemberDto.ReissueResponse> reissue(@RequestBody ApiMemberDto.ReissueRequest request){
+        return ApiResponse.ok(ApiMemberDto.ReissueResponse.fromInfo(memberService.reissue(request.toCommand())));
     }
 
 }
